@@ -37,20 +37,23 @@ echo ""
 echo "📁 Creating MCP server directory..."
 mkdir -p ~/.claude-mcp-servers/multi-ai-collab
 
+# Get script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Copy server files
 echo "📋 Installing server..."
-cp server.py ~/.claude-mcp-servers/multi-ai-collab/
+cp "$SCRIPT_DIR/server.py" ~/.claude-mcp-servers/multi-ai-collab/
 
 # Create credentials.json from template if it doesn't exist
 if [ ! -f ~/.claude-mcp-servers/multi-ai-collab/credentials.json ]; then
-    cp credentials.template.json ~/.claude-mcp-servers/multi-ai-collab/credentials.json
+    cp "$SCRIPT_DIR/credentials.template.json" ~/.claude-mcp-servers/multi-ai-collab/credentials.json
     echo "📄 Created credentials.json from template"
 fi
 
 # Install Python dependencies
 echo ""
 echo "📦 Installing Python dependencies..."
-pip3 install -r requirements.txt --quiet
+pip3 install -r "$SCRIPT_DIR/requirements.txt" --quiet
 
 # Function to prompt for API key
 prompt_for_key() {
