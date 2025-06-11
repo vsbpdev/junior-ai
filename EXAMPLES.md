@@ -4,20 +4,32 @@
 
 ### Individual AI Conversations
 ```bash
-# Have a conversation with Gemini
+# Have a conversation with Gemini (Google)
 mcp__multi-ai-collab__ask_gemini
   prompt: "What's the capital of France?"
   temperature: 0.3
 
-# Ask Grok-3 for creative content
+# Ask Grok-3 (xAI) for creative content  
 mcp__multi-ai-collab__ask_grok
   prompt: "Write a haiku about coding"
   temperature: 0.8
 
-# Get factual info from ChatGPT
+# Get factual info from ChatGPT (OpenAI)
 mcp__multi-ai-collab__ask_openai
   prompt: "Explain REST APIs"
   temperature: 0.2
+```
+
+### Compare AI Personalities
+```bash
+# Ask the same question to all three
+mcp__multi-ai-collab__ask_all_ais
+  prompt: "What makes a good software engineer?"
+
+# You'll see:
+# - Gemini: Technical, detailed analysis
+# - Grok: Creative, humorous insights  
+# - ChatGPT: Balanced, comprehensive response
 ```
 
 ## Collaborative AI Features
@@ -37,19 +49,53 @@ mcp__multi-ai-collab__ask_all_ais
 Have two AIs debate different perspectives:
 
 ```bash
+# Google vs xAI perspective
 mcp__multi-ai-collab__ai_debate
   topic: "Should we use TypeScript or JavaScript for new projects?"
   ai1: "gemini"
   ai2: "grok"
+
+# Google vs OpenAI perspective  
+mcp__multi-ai-collab__ai_debate
+  topic: "Microservices vs Monolith architecture"
+  ai1: "gemini"
+  ai2: "openai"
+
+# OpenAI vs xAI perspective
+mcp__multi-ai-collab__ai_debate
+  topic: "React vs Vue.js for frontend development"
+  ai1: "openai"
+  ai2: "grok"
 ```
 
-**Result**: Gemini and Grok will present arguments from different angles, helping you understand both sides of technical decisions.
+**Result**: You'll see different AI companies' perspectives debate technical decisions, giving you insights from Google, OpenAI, and xAI approaches!
 
 ## Code Review Examples
 
-### Security Review with Gemini
+### Multi-AI Code Review Comparison
+Get different AI perspectives on the same code:
+
 ```bash
+# Gemini: Technical accuracy and best practices
 mcp__multi-ai-collab__gemini_code_review
+  code: |
+    def login(username, password):
+        if username == "admin" and password == "password123":
+            return {"token": "abc123", "role": "admin"}
+        return None
+  focus: "security"
+
+# ChatGPT: Comprehensive analysis and suggestions
+mcp__multi-ai-collab__openai_code_review
+  code: |
+    def login(username, password):
+        if username == "admin" and password == "password123":
+            return {"token": "abc123", "role": "admin"}
+        return None
+  focus: "security"
+
+# Grok: Creative solutions and alternatives
+mcp__multi-ai-collab__grok_code_review
   code: |
     def login(username, password):
         if username == "admin" and password == "password123":
@@ -58,31 +104,7 @@ mcp__multi-ai-collab__gemini_code_review
   focus: "security"
 ```
 
-### Performance Review with Grok
-```bash
-mcp__multi-ai-collab__grok_code_review
-  code: |
-    def find_user(users, target_id):
-        for user in users:
-            if user.id == target_id:
-                return user
-        return None
-  focus: "performance"
-```
-
-### General Review with ChatGPT
-```bash
-mcp__multi-ai-collab__openai_code_review
-  code: |
-    class User:
-        def __init__(self, name):
-            self.name = name
-            self.active = True
-        
-        def deactivate(self):
-            self.active = False
-  focus: "general"
-```
+**Result**: You'll get Google's technical precision, OpenAI's balanced analysis, and xAI's creative alternatives!
 
 ## Real-World Workflow Examples
 
