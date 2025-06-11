@@ -55,33 +55,46 @@ echo ""
 echo "📦 Installing Python dependencies..."
 pip3 install -r "$SCRIPT_DIR/requirements.txt" --quiet
 
-# Function to prompt for API key
-prompt_for_key() {
+# Function to prompt for API key and model
+prompt_for_ai() {
     local service_name="$1"
     local current_key="$2"
     local description="$3"
-    local is_optional="${4:-true}"
+    local default_model="$4"
+    local available_models="$5"
+    local is_optional="${6:-true}"
     
     if [[ "$current_key" == *"YOUR_"*"_KEY_HERE" ]]; then
         echo ""
-        echo -e "${YELLOW}🔑 $service_name API Key${NC}"
+        echo -e "${YELLOW}🔑 $service_name Configuration${NC}"
         echo "   $description"
         if [ "$is_optional" = "true" ]; then
             echo -e "   ${BLUE}(Optional - press Enter to skip)${NC}"
         fi
         read -p "Enter $service_name API key: " new_key
         if [ ! -z "$new_key" ]; then
-            # Update credentials.json with new key
+            # Ask for model preference
+            echo ""
+            echo -e "${BLUE}📱 Choose $service_name model:${NC}"
+            echo "   Available: $available_models"
+            echo "   Default: $default_model"
+            read -p "Model (or press Enter for default): " model_choice
+            if [ -z "$model_choice" ]; then
+                model_choice="$default_model"
+            fi
+            
+            # Update credentials.json with new key and model
             python3 -c "
 import json
 with open('$HOME/.claude-mcp-servers/multi-ai-collab/credentials.json', 'r') as f:
     creds = json.load(f)
 creds['$(echo $service_name | tr '[:upper:]' '[:lower:]')']['api_key'] = '$new_key'
+creds['$(echo $service_name | tr '[:upper:]' '[:lower:]')']['model'] = '$model_choice'
 creds['$(echo $service_name | tr '[:upper:]' '[:lower:]')']['enabled'] = True
 with open('$HOME/.claude-mcp-servers/multi-ai-collab/credentials.json', 'w') as f:
     json.dump(creds, f, indent=2)
 "
-            echo -e "${GREEN}✅ $service_name configured and enabled${NC}"
+            echo -e "${GREEN}✅ $service_name configured with model: $model_choice${NC}"
             return 0
         else
             echo -e "${YELLOW}⏭️  $service_name skipped (can be added later)${NC}"
@@ -106,18 +119,18 @@ OPENAI_KEY=$(python3 -c "import json; f=open('$HOME/.claude-mcp-servers/multi-ai
 # Track configured AIs
 configured_ais=()
 
-# Prompt for API keys
+# Prompt for API keys and models
 echo -e "${BLUE}📝 Configure the AIs you want to use:${NC}"
 
-if prompt_for_key "Gemini" "$GEMINI_KEY" "Free API key from: https://aistudio.google.com/apikey"; then
+if prompt_for_ai "Gemini" "$GEMINI_KEY" "Free API key from: https://aistudio.google.com/apikey" "gemini-2.0-flash" "gemini-2.0-flash, gemini-2.0-flash-exp, gemini-1.5-pro"; then
     configured_ais+=("Gemini")
 fi
 
-if prompt_for_key "Grok" "$GROK_KEY" "API key from: https://console.x.ai/"; then
+if prompt_for_ai "Grok" "$GROK_KEY" "API key from: https://console.x.ai/" "grok-3" "grok-3, grok-2"; then
     configured_ais+=("Grok-3")
 fi
 
-if prompt_for_key "OpenAI" "$OPENAI_KEY" "API key from: https://platform.openai.com/api-keys"; then
+if prompt_for_ai "OpenAI" "$OPENAI_KEY" "API key from: https://platform.openai.com/api-keys" "gpt-4o" "gpt-4o, gpt-4o-mini, gpt-4-turbo, gpt-3.5-turbo"; then
     configured_ais+=("ChatGPT")
 fi
 

@@ -13,6 +13,11 @@ Get the best insights by collaborating with Gemini, Grok-3, ChatGPT, and DeepSee
 
 **💡 Flexible Setup**: You can use any combination! Have only Gemini? Perfect! Only Grok? Works great! All of them? Even better!
 
+**🎛️ Model Selection**: Choose your preferred model for each AI:
+- **Gemini**: `gemini-2.0-flash` (default), `gemini-2.0-flash-exp`, `gemini-1.5-pro`
+- **Grok**: `grok-3` (default), `grok-2`  
+- **OpenAI**: `gpt-4o` (default), `gpt-4o-mini`, `gpt-4-turbo`, `gpt-3.5-turbo`
+
 ## 🚀 Quick Start
 
 ### Prerequisites
