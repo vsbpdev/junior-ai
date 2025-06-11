@@ -1,126 +1,102 @@
-# Multi-AI MCP Server for Claude Code
+# Talk to Multiple AIs Through Claude Code
 
-🚀 **Connect Claude Code with multiple AI models simultaneously!**
+🚀 **Make Claude Code even smarter by connecting it to Google Gemini, Grok-3, and ChatGPT!**
 
-Get the best insights by collaborating with Gemini, Grok-3, ChatGPT, and DeepSeek all within Claude Code. Ask multiple AIs the same question, have them debate topics, or use each AI's unique strengths.
+Instead of switching between different AI websites, now you can simply ask Claude Code to get help from other AIs. Just say things like:
 
-## 🤖 Supported AI Models
+> "Hey Claude, ask all the AIs to help debug this code"  
+> "Claude, get Grok's opinion on this architecture"  
+> "Have Gemini and ChatGPT debate this technical decision"
 
-- **🧠 Gemini** (Google) - Free API available ✅
+## 🤖 Which AIs Are Included?
+
+- **🧠 Gemini** (Google) - Free API ✅
 - **🚀 Grok-3** (xAI) - Paid API ✅  
 - **💬 ChatGPT** (OpenAI) - Paid API ✅
-- **🔮 DeepSeek** - Coming soon to more regions
 
-**💡 Flexible Setup**: You can use any combination! Have only Gemini? Perfect! Only Grok? Works great! All of them? Even better!
+**💡 You don't need all of them!** Start with just Gemini (it's free), then add others if you want.
 
-**🎛️ Model Selection**: Choose your preferred model for each AI:
-- **Gemini**: `gemini-2.0-flash` (default), `gemini-2.0-flash-exp`, `gemini-1.5-pro`
-- **Grok**: `grok-3` (default), `grok-2`  
-- **OpenAI**: `gpt-4o` (default), `gpt-4o-mini`, `gpt-4-turbo`, `gpt-3.5-turbo`
+## 🚀 5-Minute Setup
 
-## 🚀 Quick Start
+### What You Need
+- Claude Code installed
+- At least one API key (Gemini is free!)
 
-### Prerequisites
-- Python 3.8+
-- Claude Code CLI installed
-- API keys for the AIs you want to use
+### Installation (Copy & Paste These 3 Commands)
 
-### Installation
-
-1. **Clone this repo:**
 ```bash
+# 1. Download the code
 git clone https://github.com/RaiAnsar/claude_code-multi-AI-MCP.git
 cd claude_code-multi-AI-MCP
-```
 
-2. **Get API keys (for the AIs you want):**
-   - **Gemini**: [Google AI Studio](https://aistudio.google.com/apikey) (Free)
-   - **Grok**: [xAI Console](https://console.x.ai/) (Paid)  
-   - **OpenAI**: [OpenAI Platform](https://platform.openai.com/api-keys) (Paid)
-   
-   **Note**: You don't need all of them! Configure only the AIs you have keys for.
-
-3. **Run setup:**
-```bash
+# 2. Run the automatic setup
 chmod +x setup.sh
 ./setup.sh
+
+# 3. That's it! Start using it right away
 ```
 
-The setup will:
-- Install Python dependencies  
-- Ask for your API keys (skip any you don't have)
-- Let you choose preferred models for each AI
-- Configure only the AIs you want to use
-- Store credentials securely locally
-- Add to Claude Code globally
-- Work with any combination of AIs!
+**During setup, you'll be asked for API keys:**
+- **Gemini** (Free): [Get key here](https://aistudio.google.com/apikey) 
+- **Grok** (Paid): [Get key here](https://console.x.ai/) 
+- **OpenAI** (Paid): [Get key here](https://platform.openai.com/api-keys)
 
-## 🛠️ Usage Examples
+**💡 Pro tip:** Start with just Gemini (it's free), then add others later if you want.
 
-### Ask Individual AIs
-```bash
-# Ask Gemini (Google)
-mcp__multi-ai-collab__ask_gemini
-  prompt: "Explain quantum computing"
+### Test It Works
+After setup, just ask Claude naturally:
 
-# Ask Grok-3 (xAI)
-mcp__multi-ai-collab__ask_grok
-  prompt: "What's the best programming language in 2025?"
+> "Hey Claude, ask Gemini what the capital of France is"
 
-# Ask ChatGPT (OpenAI)
-mcp__multi-ai-collab__ask_openai
-  prompt: "Debug this Python code"
-```
+If you see a response from Gemini, you're all set! 🎉
 
-### Get Different AI Perspectives
-```bash
-# Compare all three AI responses
-mcp__multi-ai-collab__ask_all_ais
-  prompt: "What are the pros and cons of microservices architecture?"
+## 💬 How to Use It (Super Simple!)
 
-# Result: You'll see responses from Gemini, Grok, AND ChatGPT side-by-side!
-```
+Once installed, you just talk to Claude Code normally and ask it to use the other AIs. Here are real examples:
 
-### AI Collaboration Features
+### Ask Claude to Get Multiple Opinions
+> **You:** "Hey Claude, ask all the AIs what they think about using microservices vs monolith architecture"
+> 
+> **Claude:** I'll ask Gemini, Grok, and ChatGPT for their perspectives on this...
+> 
+> *(Claude will use the `ask_all_ais` tool and show you all three responses)*
 
-**🤝 AI Debates - Get Multiple Perspectives:**
-```bash
-# Have Gemini vs ChatGPT debate
-mcp__multi-ai-collab__ai_debate
-  topic: "Is Python or JavaScript better for beginners?"
-  ai1: "gemini"
-  ai2: "openai"
+### Get Help Debugging Code
+> **You:** "Claude, can you have Grok help debug this Python function that's running slowly?"
+> 
+> **Claude:** Let me ask Grok to analyze your code for performance issues...
+> 
+> *(Claude will use the `grok_debug` tool)*
 
-# Or try Grok vs Gemini
-mcp__multi-ai-collab__ai_debate
-  topic: "Which is better: REST APIs or GraphQL?"
-  ai1: "grok"
-  ai2: "gemini"
-```
+### Compare Different AI Opinions
+> **You:** "Have Gemini and ChatGPT debate whether to use React or Vue for my frontend"
+> 
+> **Claude:** I'll set up a debate between Gemini and ChatGPT on this topic...
+> 
+> *(Claude will use the `ai_debate` tool)*
 
-**🔍 Multi-AI Code Reviews:**
-```bash
-# Get Gemini's perspective
-mcp__multi-ai-collab__gemini_code_review
-  code: "def auth(user): return user.password == 'admin'"
-  focus: "security"
+### Get Code Reviews from Multiple AIs
+> **You:** "Can you ask all three AIs to review this authentication function for security issues?"
+> 
+> **Claude:** I'll have Gemini, Grok, and ChatGPT each review your code...
+> 
+> *(Claude will use multiple code_review tools)*
 
-# Get ChatGPT's analysis
-mcp__multi-ai-collab__openai_code_review
-  code: "def auth(user): return user.password == 'admin'"
-  focus: "security"
+### Brainstorm Creative Solutions
+> **You:** "Ask Grok to brainstorm some creative features for my todo app"
+> 
+> **Claude:** Let me get Grok's creative input on your todo app...
+> 
+> *(Claude will use the `grok_brainstorm` tool)*
 
-# Get Grok's review
-mcp__multi-ai-collab__grok_code_review
-  code: "def auth(user): return user.password == 'admin'"
-  focus: "security"
-```
+### Get Architecture Advice
+> **You:** "Claude, have Gemini help design the database schema for my e-commerce site"
+> 
+> **Claude:** I'll ask Gemini to provide architecture recommendations...
+> 
+> *(Claude will use the `gemini_architecture` tool)*
 
-**📊 Server Management:**
-```bash
-mcp__multi-ai-collab__server_status
-# Shows: Gemini ✅, Grok ✅, ChatGPT ✅ and their models
-```
+**🎉 The beauty is you don't need to remember any commands - just ask Claude naturally!**
 
 ## 🔧 Configuration
 
@@ -157,17 +133,27 @@ Edit `~/.claude-mcp-servers/multi-ai-collab/credentials.json`:
 - **Grok**: [xAI Console](https://console.x.ai/) (Paid)
 - **OpenAI**: [OpenAI Platform](https://platform.openai.com/api-keys) (Paid)
 
-## 🌟 Why Use Multiple AIs?
+## 🌟 Why Have Multiple AIs?
 
-- **Different Strengths**: Each AI excels in different areas
-  - **Gemini**: Excellent technical accuracy and detailed explanations
-  - **Grok**: Unique perspective with humor and creative solutions
-  - **ChatGPT**: Balanced analysis and comprehensive code examples
-- **Diverse Perspectives**: Get varied approaches to problems
-- **Quality Assurance**: Cross-check answers for accuracy across all three
-- **Specialized Tasks**: Use the best AI for each specific task
-- **Learning**: Compare different AI reasoning styles and approaches
-- **Debate Features**: Have AIs argue different sides to explore all angles
+Think of it like having a team of experts with different personalities:
+
+- **🧠 Gemini** (Google): The technical expert
+  - Great for detailed explanations and accuracy
+  - Best for: Complex technical questions, code analysis
+  
+- **🚀 Grok** (xAI): The creative problem solver  
+  - Brings unique perspectives and humor
+  - Best for: Creative solutions, brainstorming, alternative approaches
+  
+- **💬 ChatGPT** (OpenAI): The balanced advisor
+  - Comprehensive analysis and practical examples
+  - Best for: General advice, code examples, balanced perspectives
+
+**Real Benefits:**
+- **Better Decisions**: Get 2-3 opinions before making important choices
+- **Learn Faster**: See how different AIs approach the same problem  
+- **Catch Mistakes**: If one AI misses something, another might catch it
+- **Save Time**: Get multiple expert opinions without switching apps
 
 ## 🔧 Partial Configurations
 
