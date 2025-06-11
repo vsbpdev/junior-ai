@@ -45,25 +45,6 @@ cp server.py ~/.claude-mcp-servers/multi-ai-collab/
 if [ ! -f ~/.claude-mcp-servers/multi-ai-collab/credentials.json ]; then
     cp credentials.template.json ~/.claude-mcp-servers/multi-ai-collab/credentials.json
     echo "📄 Created credentials.json from template"
-    
-    # Pre-populate with known API keys
-    python3 -c "
-import json
-with open('$HOME/.claude-mcp-servers/multi-ai-collab/credentials.json', 'r') as f:
-    creds = json.load(f)
-
-# Set Gemini key and enable
-creds['gemini']['api_key'] = 'AIzaSyAaM2P8MCi03cw99evShfEjtiYs4UvJJX0'
-creds['gemini']['enabled'] = True
-
-# Set Grok key and enable  
-creds['grok']['api_key'] = 'xai-YTVQft9E5SvhZPdUBqm3N4t3K8juM0B8iIXQ7Ytw0U5pOyvu5q3y7IXxCIeaM98ECEJCzDdPOIl3Xutm'
-creds['grok']['enabled'] = True
-
-with open('$HOME/.claude-mcp-servers/multi-ai-collab/credentials.json', 'w') as f:
-    json.dump(creds, f, indent=2)
-"
-    echo "🔑 Pre-configured Gemini and Grok API keys"
 fi
 
 # Install Python dependencies
@@ -111,7 +92,9 @@ GROK_KEY=$(python3 -c "import json; f=open('$HOME/.claude-mcp-servers/multi-ai-c
 OPENAI_KEY=$(python3 -c "import json; f=open('$HOME/.claude-mcp-servers/multi-ai-collab/credentials.json'); print(json.load(f)['openai']['api_key'])")
 
 # Prompt for missing keys
-prompt_for_key "OpenAI" "$OPENAI_KEY" "Get from: https://platform.openai.com/api-keys"
+prompt_for_key "Gemini" "$GEMINI_KEY" "Get free key from: https://aistudio.google.com/apikey"
+prompt_for_key "Grok" "$GROK_KEY" "Get key from: https://console.x.ai/"
+prompt_for_key "OpenAI" "$OPENAI_KEY" "Get key from: https://platform.openai.com/api-keys"
 
 echo ""
 echo "🔧 Configuring Claude Code..."

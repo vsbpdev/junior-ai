@@ -6,10 +6,10 @@ Get the best insights by collaborating with Gemini, Grok-3, ChatGPT, and DeepSee
 
 ## 🤖 Supported AI Models
 
-- **✅ Gemini** (Google) - Already configured
-- **✅ Grok-3** (xAI) - Already configured  
-- **🔧 ChatGPT** (OpenAI) - Add your API key
-- **🔮 DeepSeek** - Ready for when API becomes available
+- **🧠 Gemini** (Google) - Free API available
+- **🚀 Grok-3** (xAI) - Paid API  
+- **💬 ChatGPT** (OpenAI) - Paid API
+- **🔮 DeepSeek** - Coming soon to more regions
 
 ## 🚀 Quick Start
 
@@ -22,11 +22,16 @@ Get the best insights by collaborating with Gemini, Grok-3, ChatGPT, and DeepSee
 
 1. **Clone this repo:**
 ```bash
-git clone https://github.com/RaiAnsar/claude_code-multi-ai-mcp.git
-cd claude_code-multi-ai-mcp
+git clone https://github.com/RaiAnsar/claude_code-multi-AI-MCP.git
+cd claude_code-multi-AI-MCP
 ```
 
-2. **Run setup:**
+2. **Get your API keys:**
+   - **Gemini**: [Google AI Studio](https://aistudio.google.com/apikey) (Free)
+   - **Grok**: [xAI Console](https://console.x.ai/) (Paid)  
+   - **OpenAI**: [OpenAI Platform](https://platform.openai.com/api-keys) (Paid)
+
+3. **Run setup:**
 ```bash
 chmod +x setup.sh
 ./setup.sh
@@ -34,7 +39,8 @@ chmod +x setup.sh
 
 The setup will:
 - Install Python dependencies  
-- Configure API keys (prompts for missing ones)
+- Prompt for your API keys securely
+- Configure credentials locally (never committed to git)
 - Add to Claude Code globally
 - Test the installation
 
@@ -121,10 +127,13 @@ Edit `~/.claude-mcp-servers/multi-ai-collab/credentials.json`:
 
 ## 🔒 Security Notes
 
-- API keys are stored locally in `credentials.json`
-- Only enabled AIs are loaded
-- Failed AI connections don't break the server
-- Input validation on all requests
+- **API keys stored locally**: All credentials are in `~/.claude-mcp-servers/multi-ai-collab/credentials.json`
+- **Never committed to git**: The `.gitignore` file excludes all credential files
+- **Optional AIs**: Only AIs with valid keys are loaded
+- **Graceful failures**: Failed AI connections don't break the server
+- **Input validation**: All requests are validated before processing
+
+⚠️ **Important**: Never share your `credentials.json` file or commit it to version control!
 
 ## 🐛 Troubleshooting
 
