@@ -1,6 +1,8 @@
 # Talk to Multiple AIs Through Claude Code
 
-🚀 **Make Claude Code even smarter by connecting it to Google Gemini, Grok-3, and ChatGPT!**
+🚀 **Make Claude Code even smarter by connecting it to Google Gemini, Grok-3, ChatGPT, and DeepSeek!**
+
+**⚡ You can use any combination - just the ones you have API keys for!**
 
 Instead of switching between different AI websites, now you can simply ask Claude Code to get help from other AIs. Just say things like:
 
@@ -59,9 +61,9 @@ Once installed, you just talk to Claude Code normally and ask it to use the othe
 ### Ask Claude to Get Multiple Opinions
 > **You:** "Hey Claude, ask all the AIs what they think about using microservices vs monolith architecture"
 > 
-> **Claude:** I'll ask Gemini, Grok, and ChatGPT for their perspectives on this...
+> **Claude:** I'll ask all available AIs for their perspectives on this...
 > 
-> *(Claude will use the `ask_all_ais` tool and show you all three responses)*
+> *(Claude will use the `ask_all_ais` tool and show you all available AI responses)*
 
 ### Get Help Debugging Code
 > **You:** "Claude, can you have Grok help debug this Python function that's running slowly?"
@@ -78,9 +80,9 @@ Once installed, you just talk to Claude Code normally and ask it to use the othe
 > *(Claude will use the `ai_debate` tool)*
 
 ### Get Code Reviews from Multiple AIs
-> **You:** "Can you ask all three AIs to review this authentication function for security issues?"
+> **You:** "Can you ask all the AIs to review this authentication function for security issues?"
 > 
-> **Claude:** I'll have Gemini, Grok, and ChatGPT each review your code...
+> **Claude:** I'll have all available AIs review your code...
 > 
 > *(Claude will use multiple code_review tools)*
 
@@ -128,7 +130,7 @@ Edit `~/.claude-mcp-servers/multi-ai-collab/credentials.json`:
 **💡 Pro Tip**: You can mix and match any combination:
 - Only Gemini? Works perfectly!
 - Gemini + ChatGPT? Great for comparing Google vs OpenAI perspectives!
-- All three? Maximum AI collaboration power!
+- Any combination? Maximum AI collaboration power!
 
 ### Getting API Keys
 - **Gemini**: [Google AI Studio](https://aistudio.google.com/apikey) (Free)
@@ -169,9 +171,11 @@ Think of it like having a team of experts with different personalities:
 - **Only Gemini?** You'll have access to Google's powerful free AI
 - **Only Grok?** Get xAI's unique perspective and humor  
 - **Only ChatGPT?** Use OpenAI's well-established models
+- **Only DeepSeek?** Get specialized reasoning and coding help
 - **Gemini + ChatGPT?** Compare Google vs OpenAI approaches!
-- **Grok + ChatGPT?** Get both creative and analytical perspectives!
-- **Have all 3?** Ultimate AI collaboration with debates and comparisons!
+- **Grok + DeepSeek?** Creative thinking meets logical reasoning!
+- **Any 3 AIs?** Excellent multi-perspective collaboration!
+- **Have all 4?** Ultimate AI collaboration with maximum diversity!
 
 The server automatically adapts to your available AIs. Tools for unavailable AIs simply won't appear in Claude Code.
 
@@ -179,6 +183,7 @@ The server automatically adapts to your available AIs. Tools for unavailable AIs
 - Start with **free Gemini** to test the system
 - Add **ChatGPT** for proven OpenAI capabilities  
 - Include **Grok** for unique xAI insights
+- Add **DeepSeek** for specialized reasoning tasks
 
 ## 🔒 Security Notes
 

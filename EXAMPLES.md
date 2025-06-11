@@ -32,6 +32,7 @@ def process_payment(amount, card_number):
 - **Gemini's** technical deep-dive into scalable architectures
 - **Grok's** creative alternatives you might not have considered  
 - **ChatGPT's** balanced analysis with practical examples
+- **DeepSeek's** logical reasoning about performance optimization
 
 ### Example 4: AI Debate for Big Decisions
 **You:** "Claude, I can't decide between microservices and monolith for my startup. Can you have Gemini and ChatGPT debate this?"
@@ -53,7 +54,7 @@ function login(username, password) {
 }
 ```
 
-**What happens:** You'll get three different security reviews, catching issues you might miss with just one opinion.
+**What happens:** You'll get multiple different security reviews, catching issues you might miss with just one opinion.
 
 ### Example 6: Performance Review
 **You:** "Claude, ask Gemini to review this database query - it's taking forever to run."
@@ -86,7 +87,7 @@ function login(username, password) {
 ### Scenario 1: Starting a New Project
 **You:** "Claude, I want to build a food delivery app. Can you ask all the AIs to help me plan this out?"
 
-**Claude's response:** "I'll get input from all three AIs on your food delivery app..."
+**Claude's response:** "I'll get input from all available AIs on your food delivery app..."
 
 **Result:** You get a comprehensive project plan with:
 - Technical architecture recommendations
@@ -96,7 +97,7 @@ function login(username, password) {
 ### Scenario 2: Fixing a Production Bug
 **You:** "Claude, our payment system went down and users can't checkout. Ask all the AIs what could be wrong."
 
-**What happens:** You get rapid-fire debugging help from three different AI perspectives, increasing your chances of finding the issue quickly.
+**What happens:** You get rapid-fire debugging help from multiple AI perspectives, increasing your chances of finding the issue quickly.
 
 ### Scenario 3: Code Refactoring Decision
 **You:** "Claude, should I refactor this 500-line function? Have Gemini and ChatGPT debate the pros and cons."
@@ -129,14 +130,16 @@ function login(username, password) {
 
 ## 🚀 Advanced Workflows
 
-### The "Triple-Check" Method
+### The "Multi-AI Review" Method
 1. **You:** "Claude, ask Gemini to design a user authentication system"
 2. **You:** "Now have ChatGPT review Gemini's design for any issues"  
-3. **You:** "Finally, ask Grok if there are any creative improvements"
+3. **You:** "Have DeepSeek analyze the logic and security"
+4. **You:** "Finally, ask Grok if there are any creative improvements"
 
 ### The "Debate & Decide" Method
 1. **You:** "Claude, have Gemini and Grok debate REST vs GraphQL for my API"
-2. **You:** "Now ask ChatGPT to summarize the debate and give a final recommendation"
+2. **You:** "Have DeepSeek analyze the performance implications"
+3. **You:** "Now ask ChatGPT to summarize everything and give a final recommendation"
 
 ### The "Perspective Gathering" Method
 **You:** "Claude, I'm stuck on this complex algorithm. Ask all the AIs for their different approaches, then help me combine the best ideas."
