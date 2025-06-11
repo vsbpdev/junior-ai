@@ -115,6 +115,7 @@ echo "You can skip any AI you don't have an API key for - the server will work w
 GEMINI_KEY=$(python3 -c "import json; f=open('$HOME/.claude-mcp-servers/multi-ai-collab/credentials.json'); print(json.load(f)['gemini']['api_key'])")
 GROK_KEY=$(python3 -c "import json; f=open('$HOME/.claude-mcp-servers/multi-ai-collab/credentials.json'); print(json.load(f)['grok']['api_key'])")
 OPENAI_KEY=$(python3 -c "import json; f=open('$HOME/.claude-mcp-servers/multi-ai-collab/credentials.json'); print(json.load(f)['openai']['api_key'])")
+DEEPSEEK_KEY=$(python3 -c "import json; f=open('$HOME/.claude-mcp-servers/multi-ai-collab/credentials.json'); print(json.load(f)['deepseek']['api_key'])")
 
 # Track configured AIs
 configured_ais=()
@@ -132,6 +133,10 @@ fi
 
 if prompt_for_ai "OpenAI" "$OPENAI_KEY" "API key from: https://platform.openai.com/api-keys" "gpt-4o" "gpt-4o, gpt-4o-mini, gpt-4-turbo, gpt-3.5-turbo"; then
     configured_ais+=("ChatGPT")
+fi
+
+if prompt_for_ai "DeepSeek" "$DEEPSEEK_KEY" "API key from: https://platform.deepseek.com/" "deepseek-chat" "deepseek-chat, deepseek-coder"; then
+    configured_ais+=("DeepSeek")
 fi
 
 # Show summary

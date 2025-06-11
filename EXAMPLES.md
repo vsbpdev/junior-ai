@@ -65,15 +65,21 @@ function login(username, password) {
 ### Example 7: Learning New Tech
 **You:** "I've never used Docker before. Claude, can you ask all the AIs to explain it in different ways?"
 
-**What happens:** You'll get three different explanations:
+**What happens:** You'll get multiple different explanations:
 - **Gemini**: Technical and detailed
 - **Grok**: Creative analogies and practical insights
 - **ChatGPT**: Balanced with good examples
+- **DeepSeek**: Mathematical and logical approach
 
 ### Example 8: Creative Problem Solving
 **You:** "Claude, I need some creative features for my fitness app. Ask Grok to brainstorm some wild ideas."
 
 **What happens:** Grok will generate creative, out-of-the-box features you probably wouldn't think of yourself.
+
+### Example 9: Algorithm Optimization
+**You:** "Claude, this sorting algorithm is too slow. Have DeepSeek optimize it for better performance."
+
+**What happens:** DeepSeek will analyze the algorithm mathematically and suggest performance improvements with detailed reasoning.
 
 ## 🏢 Real Project Scenarios
 
@@ -115,6 +121,11 @@ function login(username, password) {
 - "Claude, ask ChatGPT for a balanced analysis of these options"
 - "Have ChatGPT provide code examples for this pattern"
 - "Get ChatGPT's practical advice on this implementation"
+
+**Ask for DeepSeek when you want:**
+- "Claude, have DeepSeek optimize this algorithm's performance"
+- "Ask DeepSeek to solve this complex mathematical problem"
+- "Get DeepSeek's help with advanced coding challenges"
 
 ## 🚀 Advanced Workflows
 

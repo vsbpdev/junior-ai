@@ -13,6 +13,7 @@ Instead of switching between different AI websites, now you can simply ask Claud
 - **🧠 Gemini** (Google) - Free API ✅
 - **🚀 Grok-3** (xAI) - Paid API ✅  
 - **💬 ChatGPT** (OpenAI) - Paid API ✅
+- **🔮 DeepSeek** - Paid API ✅
 
 **💡 You don't need all of them!** Start with just Gemini (it's free), then add others if you want.
 
@@ -40,6 +41,7 @@ chmod +x setup.sh
 - **Gemini** (Free): [Get key here](https://aistudio.google.com/apikey) 
 - **Grok** (Paid): [Get key here](https://console.x.ai/) 
 - **OpenAI** (Paid): [Get key here](https://platform.openai.com/api-keys)
+- **DeepSeek** (Paid): [Get key here](https://platform.deepseek.com/)
 
 **💡 Pro tip:** Start with just Gemini (it's free), then add others later if you want.
 
@@ -132,6 +134,7 @@ Edit `~/.claude-mcp-servers/multi-ai-collab/credentials.json`:
 - **Gemini**: [Google AI Studio](https://aistudio.google.com/apikey) (Free)
 - **Grok**: [xAI Console](https://console.x.ai/) (Paid)
 - **OpenAI**: [OpenAI Platform](https://platform.openai.com/api-keys) (Paid)
+- **DeepSeek**: [DeepSeek Platform](https://platform.deepseek.com/) (Paid)
 
 ## 🌟 Why Have Multiple AIs?
 
@@ -148,6 +151,10 @@ Think of it like having a team of experts with different personalities:
 - **💬 ChatGPT** (OpenAI): The balanced advisor
   - Comprehensive analysis and practical examples
   - Best for: General advice, code examples, balanced perspectives
+
+- **🔮 DeepSeek**: The reasoning specialist
+  - Strong in math, coding, and logical reasoning
+  - Best for: Complex algorithms, mathematical problems, code optimization
 
 **Real Benefits:**
 - **Better Decisions**: Get 2-3 opinions before making important choices
