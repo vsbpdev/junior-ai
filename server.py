@@ -170,9 +170,10 @@ def handle_tools_list(request_id: Any) -> Dict[str, Any]:
         }
     ]
     
-    # Individual AI tools
+    # Individual AI tools - comprehensive set
     for ai_name in AI_CLIENTS.keys():
         tools.extend([
+            # Basic interaction
             {
                 "name": f"ask_{ai_name}",
                 "description": f"Ask {ai_name.upper()} a question",
@@ -192,9 +193,10 @@ def handle_tools_list(request_id: Any) -> Dict[str, Any]:
                     "required": ["prompt"]
                 }
             },
+            # Code review
             {
                 "name": f"{ai_name}_code_review",
-                "description": f"Have {ai_name.upper()} review code",
+                "description": f"Have {ai_name.upper()} review code for issues and improvements",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -204,11 +206,101 @@ def handle_tools_list(request_id: Any) -> Dict[str, Any]:
                         },
                         "focus": {
                             "type": "string",
-                            "description": "Focus area (security, performance, etc.)",
+                            "description": "Focus area (security, performance, readability, etc.)",
                             "default": "general"
                         }
                     },
                     "required": ["code"]
+                }
+            },
+            # Deep thinking/analysis
+            {
+                "name": f"{ai_name}_think_deep",
+                "description": f"Have {ai_name.upper()} do deep analysis with extended reasoning",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "topic": {
+                            "type": "string",
+                            "description": "Topic or problem for deep analysis"
+                        },
+                        "context": {
+                            "type": "string",
+                            "description": "Additional context or constraints",
+                            "default": ""
+                        }
+                    },
+                    "required": ["topic"]
+                }
+            },
+            # Brainstorming
+            {
+                "name": f"{ai_name}_brainstorm",
+                "description": f"Brainstorm creative solutions with {ai_name.upper()}",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "challenge": {
+                            "type": "string",
+                            "description": "The challenge or problem to brainstorm about"
+                        },
+                        "constraints": {
+                            "type": "string",
+                            "description": "Any constraints or limitations",
+                            "default": ""
+                        }
+                    },
+                    "required": ["challenge"]
+                }
+            },
+            # Debug assistance
+            {
+                "name": f"{ai_name}_debug",
+                "description": f"Get debugging help from {ai_name.upper()}",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "error": {
+                            "type": "string",
+                            "description": "Error message or description"
+                        },
+                        "code": {
+                            "type": "string",
+                            "description": "Related code that's causing issues",
+                            "default": ""
+                        },
+                        "context": {
+                            "type": "string",
+                            "description": "Additional context about the environment/setup",
+                            "default": ""
+                        }
+                    },
+                    "required": ["error"]
+                }
+            },
+            # Architecture advice
+            {
+                "name": f"{ai_name}_architecture",
+                "description": f"Get architecture design advice from {ai_name.upper()}",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "requirements": {
+                            "type": "string",
+                            "description": "System requirements and goals"
+                        },
+                        "constraints": {
+                            "type": "string",
+                            "description": "Technical constraints, budget, timeline etc.",
+                            "default": ""
+                        },
+                        "scale": {
+                            "type": "string",
+                            "description": "Expected scale (users, data, etc.)",
+                            "default": ""
+                        }
+                    },
+                    "required": ["requirements"]
                 }
             }
         ])
@@ -257,6 +349,44 @@ def handle_tools_list(request_id: Any) -> Dict[str, Any]:
                         }
                     },
                     "required": ["topic"]
+                }
+            },
+            {
+                "name": "collaborative_solve",
+                "description": "Have multiple AIs collaborate to solve a complex problem",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "problem": {
+                            "type": "string",
+                            "description": "The complex problem to solve"
+                        },
+                        "approach": {
+                            "type": "string",
+                            "description": "How to divide the work (sequential, parallel, debate)",
+                            "default": "sequential"
+                        }
+                    },
+                    "required": ["problem"]
+                }
+            },
+            {
+                "name": "ai_consensus",
+                "description": "Get consensus opinion from all available AIs",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "question": {
+                            "type": "string",
+                            "description": "Question to get consensus on"
+                        },
+                        "options": {
+                            "type": "string",
+                            "description": "Available options or approaches to choose from",
+                            "default": ""
+                        }
+                    },
+                    "required": ["question"]
                 }
             }
         ])
@@ -323,6 +453,35 @@ Configured Models:
 ---
 *Both AIs presented their best arguments!*"""
         
+        elif tool_name == "collaborative_solve":
+            problem = arguments.get("problem", "")
+            approach = arguments.get("approach", "sequential")
+            
+            if approach == "sequential":
+                result = "🧠 COLLABORATIVE PROBLEM SOLVING (Sequential)\n\n"
+                for i, ai_name in enumerate(AI_CLIENTS.keys(), 1):
+                    prompt = f"Step {i}: Analyze this problem: {problem}. Build on previous insights if any, and provide your unique perspective and solution approach."
+                    response = call_ai(ai_name, prompt, 0.6)
+                    result += f"## Step {i} - {ai_name.upper()} Analysis:\n{response}\n\n"
+            else:  # parallel
+                result = call_multiple_ais(f"Solve this complex problem: {problem}", list(AI_CLIENTS.keys()), 0.6)
+        
+        elif tool_name == "ai_consensus":
+            question = arguments.get("question", "")
+            options = arguments.get("options", "")
+            
+            prompt = f"Question: {question}"
+            if options:
+                prompt += f"\nAvailable options: {options}"
+            prompt += "\nProvide your recommendation and reasoning. Be concise but thorough."
+            
+            responses = []
+            for ai_name in AI_CLIENTS.keys():
+                response = call_ai(ai_name, prompt, 0.4)
+                responses.append(f"## {ai_name.upper()} Recommendation:\n{response}")
+            
+            result = "🤝 AI CONSENSUS ANALYSIS\n\n" + "\n\n".join(responses)
+        
         # Individual AI calls
         elif tool_name.startswith("ask_"):
             ai_name = tool_name.replace("ask_", "")
@@ -350,6 +509,64 @@ Provide specific, actionable feedback on:
 5. Code clarity and maintainability"""
             
             result = call_ai(ai_name, prompt, 0.3)
+        
+        # Deep thinking calls
+        elif tool_name.endswith("_think_deep"):
+            ai_name = tool_name.replace("_think_deep", "")
+            topic = arguments.get("topic", "")
+            context = arguments.get("context", "")
+            
+            prompt = f"Think deeply and analytically about: {topic}"
+            if context:
+                prompt += f"\n\nContext: {context}"
+            prompt += "\n\nProvide comprehensive analysis with multiple perspectives, implications, and detailed reasoning."
+            
+            result = call_ai(ai_name, prompt, 0.4)
+        
+        # Brainstorming calls
+        elif tool_name.endswith("_brainstorm"):
+            ai_name = tool_name.replace("_brainstorm", "")
+            challenge = arguments.get("challenge", "")
+            constraints = arguments.get("constraints", "")
+            
+            prompt = f"Brainstorm creative solutions for: {challenge}"
+            if constraints:
+                prompt += f"\n\nConstraints: {constraints}"
+            prompt += "\n\nGenerate multiple innovative ideas, alternatives, and out-of-the-box approaches."
+            
+            result = call_ai(ai_name, prompt, 0.8)
+        
+        # Debug assistance calls
+        elif tool_name.endswith("_debug"):
+            ai_name = tool_name.replace("_debug", "")
+            error = arguments.get("error", "")
+            code = arguments.get("code", "")
+            context = arguments.get("context", "")
+            
+            prompt = f"Help debug this issue: {error}"
+            if code:
+                prompt += f"\n\nRelated code:\n```\n{code}\n```"
+            if context:
+                prompt += f"\n\nContext: {context}"
+            prompt += "\n\nProvide debugging steps, potential causes, and specific solutions."
+            
+            result = call_ai(ai_name, prompt, 0.3)
+        
+        # Architecture advice calls
+        elif tool_name.endswith("_architecture"):
+            ai_name = tool_name.replace("_architecture", "")
+            requirements = arguments.get("requirements", "")
+            constraints = arguments.get("constraints", "")
+            scale = arguments.get("scale", "")
+            
+            prompt = f"Design architecture for: {requirements}"
+            if constraints:
+                prompt += f"\n\nConstraints: {constraints}"
+            if scale:
+                prompt += f"\n\nScale requirements: {scale}"
+            prompt += "\n\nProvide detailed architecture recommendations, patterns, and implementation guidance."
+            
+            result = call_ai(ai_name, prompt, 0.5)
         
         else:
             raise ValueError(f"Unknown tool: {tool_name}")
