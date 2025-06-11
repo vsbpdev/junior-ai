@@ -60,11 +60,16 @@ prompt_for_key() {
     local service_name="$1"
     local current_key="$2"
     local description="$3"
+    local is_optional="${4:-true}"
     
     if [[ "$current_key" == *"YOUR_"*"_KEY_HERE" ]]; then
-        echo -e "${YELLOW}🔑 $service_name API Key needed${NC}"
+        echo ""
+        echo -e "${YELLOW}🔑 $service_name API Key${NC}"
         echo "   $description"
-        read -p "Enter $service_name API key (or press Enter to skip): " new_key
+        if [ "$is_optional" = "true" ]; then
+            echo -e "   ${BLUE}(Optional - press Enter to skip)${NC}"
+        fi
+        read -p "Enter $service_name API key: " new_key
         if [ ! -z "$new_key" ]; then
             # Update credentials.json with new key
             python3 -c "
@@ -76,28 +81,55 @@ creds['$(echo $service_name | tr '[:upper:]' '[:lower:]')']['enabled'] = True
 with open('$HOME/.claude-mcp-servers/multi-ai-collab/credentials.json', 'w') as f:
     json.dump(creds, f, indent=2)
 "
-            echo -e "${GREEN}✅ $service_name API key configured${NC}"
+            echo -e "${GREEN}✅ $service_name configured and enabled${NC}"
+            return 0
         else
-            echo -e "${YELLOW}⚠️  $service_name skipped (can be configured later)${NC}"
+            echo -e "${YELLOW}⏭️  $service_name skipped (can be added later)${NC}"
+            return 1
         fi
     else
-        echo -e "${GREEN}✅ $service_name API key already configured${NC}"
+        echo -e "${GREEN}✅ $service_name already configured${NC}"
+        return 0
     fi
 }
 
 # Configure API keys
 echo ""
 echo "🔧 Configuring API keys..."
+echo "You can skip any AI you don't have an API key for - the server will work with whatever you configure!"
 
 # Read current credentials
 GEMINI_KEY=$(python3 -c "import json; f=open('$HOME/.claude-mcp-servers/multi-ai-collab/credentials.json'); print(json.load(f)['gemini']['api_key'])")
 GROK_KEY=$(python3 -c "import json; f=open('$HOME/.claude-mcp-servers/multi-ai-collab/credentials.json'); print(json.load(f)['grok']['api_key'])")
 OPENAI_KEY=$(python3 -c "import json; f=open('$HOME/.claude-mcp-servers/multi-ai-collab/credentials.json'); print(json.load(f)['openai']['api_key'])")
 
-# Prompt for missing keys
-prompt_for_key "Gemini" "$GEMINI_KEY" "Get free key from: https://aistudio.google.com/apikey"
-prompt_for_key "Grok" "$GROK_KEY" "Get key from: https://console.x.ai/"
-prompt_for_key "OpenAI" "$OPENAI_KEY" "Get key from: https://platform.openai.com/api-keys"
+# Track configured AIs
+configured_ais=()
+
+# Prompt for API keys
+echo -e "${BLUE}📝 Configure the AIs you want to use:${NC}"
+
+if prompt_for_key "Gemini" "$GEMINI_KEY" "Free API key from: https://aistudio.google.com/apikey"; then
+    configured_ais+=("Gemini")
+fi
+
+if prompt_for_key "Grok" "$GROK_KEY" "API key from: https://console.x.ai/"; then
+    configured_ais+=("Grok-3")
+fi
+
+if prompt_for_key "OpenAI" "$OPENAI_KEY" "API key from: https://platform.openai.com/api-keys"; then
+    configured_ais+=("ChatGPT")
+fi
+
+# Show summary
+echo ""
+if [ ${#configured_ais[@]} -eq 0 ]; then
+    echo -e "${RED}❌ No AIs configured. Please run setup again with at least one API key.${NC}"
+    exit 1
+else
+    echo -e "${GREEN}🎉 Configured AIs: ${configured_ais[*]}${NC}"
+    echo -e "${BLUE}💡 You can add more API keys later by editing: ~/.claude-mcp-servers/multi-ai-collab/credentials.json${NC}"
+fi
 
 echo ""
 echo "🔧 Configuring Claude Code..."
@@ -112,11 +144,22 @@ echo -e "${GREEN}✅ Setup complete!${NC}"
 echo ""
 echo "🎉 Multi-AI MCP Server is ready!"
 echo ""
-echo "Available AIs:"
-echo "  • 🤖 Gemini (Google)"
-echo "  • 🚀 Grok-3 (xAI)"
-[[ "$OPENAI_KEY" != *"YOUR_"*"_KEY_HERE" ]] && echo "  • 🧠 ChatGPT (OpenAI)"
-echo "  • 🔮 DeepSeek (when available)"
+echo "Your configured AIs:"
+for ai in "${configured_ais[@]}"; do
+    case $ai in
+        "Gemini") echo "  • 🧠 Gemini (Google)" ;;
+        "Grok-3") echo "  • 🚀 Grok-3 (xAI)" ;;
+        "ChatGPT") echo "  • 💬 ChatGPT (OpenAI)" ;;
+    esac
+done
+
+if [ ${#configured_ais[@]} -gt 1 ]; then
+    echo ""
+    echo "🤝 Multi-AI features available:"
+    echo "  • Ask all AIs the same question"
+    echo "  • Have AIs debate topics"
+    echo "  • Compare different AI perspectives"
+fi
 echo ""
 echo "Try it out:"
 echo "  1. Run: claude"

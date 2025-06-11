@@ -6,10 +6,12 @@ Get the best insights by collaborating with Gemini, Grok-3, ChatGPT, and DeepSee
 
 ## 🤖 Supported AI Models
 
-- **🧠 Gemini** (Google) - Free API available
-- **🚀 Grok-3** (xAI) - Paid API  
-- **💬 ChatGPT** (OpenAI) - Paid API
+- **🧠 Gemini** (Google) - Free API available ✅
+- **🚀 Grok-3** (xAI) - Paid API ✅  
+- **💬 ChatGPT** (OpenAI) - Paid API ✅
 - **🔮 DeepSeek** - Coming soon to more regions
+
+**💡 Flexible Setup**: You can use any combination! Have only Gemini? Perfect! Only Grok? Works great! All of them? Even better!
 
 ## 🚀 Quick Start
 
@@ -26,10 +28,12 @@ git clone https://github.com/RaiAnsar/claude_code-multi-AI-MCP.git
 cd claude_code-multi-AI-MCP
 ```
 
-2. **Get your API keys:**
+2. **Get API keys (for the AIs you want):**
    - **Gemini**: [Google AI Studio](https://aistudio.google.com/apikey) (Free)
    - **Grok**: [xAI Console](https://console.x.ai/) (Paid)  
    - **OpenAI**: [OpenAI Platform](https://platform.openai.com/api-keys) (Paid)
+   
+   **Note**: You don't need all of them! Configure only the AIs you have keys for.
 
 3. **Run setup:**
 ```bash
@@ -39,10 +43,11 @@ chmod +x setup.sh
 
 The setup will:
 - Install Python dependencies  
-- Prompt for your API keys securely
-- Configure credentials locally (never committed to git)
+- Ask for your API keys (skip any you don't have)
+- Configure only the AIs you want to use
+- Store credentials securely locally
 - Add to Claude Code globally
-- Test the installation
+- Work with any combination of AIs!
 
 ## 🛠️ Usage Examples
 
@@ -124,6 +129,17 @@ Edit `~/.claude-mcp-servers/multi-ai-collab/credentials.json`:
 - **Quality Assurance**: Cross-check answers for accuracy
 - **Specialized Tasks**: Use the best AI for each specific task
 - **Learning**: Compare different AI reasoning styles
+
+## 🔧 Partial Configurations
+
+**Don't have all the API keys? No problem!**
+
+- **Only Gemini?** You'll have access to Google's powerful free AI
+- **Only Grok?** Get xAI's unique perspective and humor
+- **Only OpenAI?** Use the well-known ChatGPT models
+- **Have 2 out of 3?** Perfect for AI debates and comparisons!
+
+The server automatically adapts to your available AIs. Tools for unavailable AIs simply won't appear in Claude Code.
 
 ## 🔒 Security Notes
 
