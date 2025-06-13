@@ -1,0 +1,280 @@
+# Junior AI Assistant for Claude Code - Product Requirements Document
+
+## Executive Summary
+
+Transform the existing Multi-AI MCP Server into an intelligent Junior AI Assistant that proactively helps Claude Code when patterns indicate uncertainty or complexity. This system maintains all existing AI collaboration capabilities while adding smart pattern detection and automatic consultation features to improve coding accuracy and reduce errors.
+
+## Current State Analysis
+
+The Multi-AI MCP Server currently provides:
+- Manual access to 5 AI providers (Gemini, Grok, OpenAI, DeepSeek, OpenRouter)
+- Comprehensive tool set for code review, debugging, brainstorming, and architecture advice
+- Collaborative features (debates, consensus, multi-AI queries)
+- Individual AI specialization tools
+- Robust error handling and configuration management
+
+## Vision & Goals
+
+### Primary Goal
+Create a smart junior AI assistant that automatically detects patterns in Claude Code's work that indicate uncertainty, complexity, or potential issues, then provides proactive, accuracy-focused consultation.
+
+### Success Metrics
+- Automatic pattern detection triggers appropriate AI consultation
+- Reduced coding errors through proactive review
+- Maintained access to all existing AI capabilities
+- Improved code accuracy without workflow disruption
+- Multiple AI perspectives on critical code sections
+
+## Core Requirements
+
+### Phase 1: Rename & Rebrand
+- Transform "multi-ai-collab" to "junior-ai" throughout codebase
+- Update server name: "Multi-AI MCP Server" → "Junior AI Assistant for Claude Code"
+- Update tool prefixes: "mcp__multi-ai-collab__" → "mcp__junior-ai__"
+- Update all documentation and examples
+- Maintain backwards compatibility during transition
+
+### Phase 2: Pattern Detection System
+Implement comprehensive pattern detection with these categories:
+
+#### Security Patterns
+- Keywords: password, auth, token, encrypt, jwt, hash, api_key, secret, certificate, ssl, oauth, login, permission
+- Action: Deep security review with multiple AIs
+- Consultation: Multi-AI for comprehensive security analysis
+
+#### Uncertainty Patterns  
+- Keywords: TODO, FIXME, not sure, might be, complex, help, unsure, maybe, possibly, could be, I think, probably
+- Action: Comprehensive guidance and clarification
+- Consultation: Single junior AI with detailed analysis
+
+#### Algorithm Patterns
+- Keywords: sort, search, optimize, performance, O(n), algorithm, efficient, complexity, recursive, dynamic programming
+- Action: Algorithm analysis and optimization
+- Consultation: Multi-AI for diverse algorithmic approaches
+
+#### Gotcha Prevention Patterns
+- Keywords: regex, timezone, date, datetime, float, encoding, unicode, async, promise, callback, race condition
+- Action: Deep gotcha prevention analysis
+- Consultation: Single specialized AI with comprehensive warning system
+
+#### Architecture Patterns
+- Keywords: design pattern, architecture, should I, best practice, approach, structure, organize, pattern, SOLID
+- Action: Architectural review and recommendations
+- Consultation: Multi-AI for diverse perspectives on design decisions
+
+### Phase 3: Hybrid Tool Structure
+#### Keep All Existing Tools
+- Individual AI tools (ask_gemini, ask_grok, ask_openai, ask_deepseek, ask_openrouter)
+- Specialized tools (code_review, brainstorm, debug, architecture variants)
+- Collaborative tools (debate, consensus, ask_all_ais)
+- Maintain full manual control for explicit AI consultation
+
+#### Add Pattern-Triggered Tools
+- pattern_check: Automatic pattern detection in user input
+- junior_consult: Smart consultation based on detected patterns
+- deep_review: Comprehensive review using multiple AIs for critical patterns
+- security_panel: Multi-AI security consultation for sensitive code
+- algorithm_analysis: Multi-AI algorithm optimization consultation
+
+### Phase 4: Accuracy-First Implementation
+#### Token Philosophy
+- Prioritize accuracy over token savings
+- Pattern checks: ~200 tokens for comprehensive analysis
+- Junior consultations: 1500-3000 tokens for detailed insights
+- Multi-AI reviews: 5000+ tokens for critical sections
+- No context shortcuts - provide full relevant context
+
+#### Consultation Strategy
+- Security, algorithms, architecture: Multi-AI consultation
+- Uncertainty, gotchas: Single specialized AI with comprehensive analysis
+- Fresh analysis each time - no caching
+- Full context provided to all AIs
+- Multiple clarification rounds if needed
+- Complete transparency - show all AI reasoning
+
+### Phase 5: Enhanced Configuration
+#### Pattern Detection Settings
+```json
+"pattern_detection": {
+  "enabled": true,
+  "default_junior": "openrouter",
+  "accuracy_mode": true,
+  "auto_consult_threshold": "always_when_pattern_detected",
+  "multi_ai_for_critical": true,
+  "show_all_consultations": true
+}
+```
+
+#### Smart Consultation Rules
+- Automatic triggering based on pattern severity
+- Escalation to multiple AIs for critical patterns
+- Transparent consultation process
+- Detailed reasoning display
+- Option to override automatic behavior
+
+## Technical Architecture
+
+### Pattern Detection Engine
+- Real-time text analysis for trigger patterns
+- Configurable pattern sensitivity
+- Context-aware pattern matching
+- Multi-category pattern detection
+- Pattern severity scoring
+
+### AI Consultation Manager
+- Smart AI selection based on pattern type
+- Multi-AI coordination for critical patterns
+- Response synthesis and presentation
+- Consultation history tracking
+- Performance optimization
+
+### Integration Layer
+- Seamless Claude Code integration
+- Backward compatibility with existing tools
+- Non-disruptive pattern detection
+- Optional automatic consultation
+- Manual override capabilities
+
+## User Experience
+
+### Automatic Mode
+1. User works with Claude Code normally
+2. Pattern detection runs automatically
+3. Relevant patterns trigger junior consultation
+4. Results presented transparently
+5. User sees both Claude's work and junior insights
+
+### Manual Mode
+- All existing tools remain available
+- Explicit AI consultation on demand
+- Full control over AI selection
+- Traditional collaborative features maintained
+
+### Hybrid Workflow
+- Automatic pattern detection with manual override
+- Choose when to accept junior suggestions
+- Escalate to multi-AI consultation manually
+- Traditional tools available alongside smart features
+
+## Implementation Phases
+
+### Phase 1: Foundation (Renaming & Setup)
+- File renaming and rebranding
+- Documentation updates
+- Configuration structure enhancement
+- Backward compatibility testing
+
+### Phase 2: Pattern Detection Core
+- Pattern detection engine implementation
+- Configuration system integration
+- Basic consultation framework
+- Pattern category definitions
+
+### Phase 3: Smart Consultation
+- AI selection logic implementation
+- Multi-AI coordination system
+- Response synthesis engine
+- Consultation display system
+
+### Phase 4: Integration & Testing
+- Claude Code integration testing
+- Performance optimization
+- Error handling enhancement
+- User experience refinement
+
+### Phase 5: Documentation & Deployment
+- Complete documentation update
+- Usage examples and tutorials
+- Deployment scripts enhancement
+- User migration guide
+
+## Success Criteria
+
+### Functional Requirements
+- All existing AI tools continue to work
+- Pattern detection accurately identifies relevant patterns
+- Automatic consultation provides valuable insights
+- Multi-AI consultation works for critical patterns
+- Configuration system supports all requirements
+
+### Performance Requirements
+- Pattern detection adds minimal latency
+- AI consultations complete within reasonable time
+- System handles multiple simultaneous consultations
+- Error recovery maintains system stability
+
+### Quality Requirements
+- Improved code accuracy through proactive consultation
+- Reduced critical errors in security, algorithms, architecture
+- Enhanced user confidence in complex coding decisions
+- Maintained development workflow efficiency
+
+## Security & Privacy
+
+### API Key Management
+- All existing security measures maintained
+- No additional API key exposure
+- Secure credential storage
+- Optional AI provider selection
+
+### Data Handling  
+- No persistent storage of consultation data
+- No caching of sensitive pattern matches
+- Transparent AI communication
+- User control over data sharing
+
+## Deployment Strategy
+
+### Backward Compatibility
+- Gradual migration from multi-ai-collab to junior-ai
+- Existing configurations honored
+- Legacy tool names supported temporarily
+- Clear migration path for users
+
+### Configuration Migration
+- Automatic detection of existing configurations
+- Seamless upgrade path
+- New features opt-in by default
+- Documentation for new capabilities
+
+## Documentation Requirements
+
+### User Documentation
+- Migration guide from multi-ai-collab
+- Pattern detection explanation
+- Configuration options guide
+- Usage examples and tutorials
+
+### Technical Documentation
+- Architecture overview
+- Pattern detection algorithm details
+- AI selection logic explanation
+- Troubleshooting guide
+
+### Developer Documentation
+- Code organization and structure
+- Extension points for new patterns
+- AI provider integration guide
+- Testing and debugging instructions
+
+## Future Enhancements
+
+### Advanced Pattern Detection
+- Machine learning pattern recognition
+- User-specific pattern learning
+- Custom pattern definitions
+- Context-aware pattern weighting
+
+### Enhanced AI Coordination
+- Smart AI selection based on expertise
+- Consultation result ranking
+- AI performance tracking
+- Adaptive consultation strategies
+
+### Integration Expansion
+- IDE plugin development
+- Git integration for commit analysis
+- CI/CD pipeline integration
+- Team collaboration features
+
+This transformation will create a powerful, accuracy-focused junior AI assistant while maintaining all existing capabilities and providing a smooth transition path for current users.

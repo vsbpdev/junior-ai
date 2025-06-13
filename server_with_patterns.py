@@ -119,23 +119,8 @@ if CREDENTIALS.get("openrouter", {}).get("enabled", False):
 
 # Initialize pattern detection components if available
 if PATTERN_DETECTION_AVAILABLE:
-    # Get context window size from config
-    context_window_size = CREDENTIALS.get("pattern_detection", {}).get("context_window_size", 150)
-    pattern_engine = PatternDetectionEngine(context_window_size=context_window_size)
-    
-    # Configure caching
-    cache_config = {
-        'max_size': 1000,
-        'ttl_seconds': CREDENTIALS.get("pattern_detection", {}).get("cache_ttl_seconds", 300),
-        'persist_to_disk': False,  # Don't persist for MCP server
-        'cache_dir': None
-    }
-    
-    text_pipeline = TextProcessingPipeline(
-        pattern_engine=pattern_engine,
-        enable_cache=CREDENTIALS.get("pattern_detection", {}).get("cache_enabled", False),
-        cache_config=cache_config
-    )
+    pattern_engine = PatternDetectionEngine()
+    text_pipeline = TextProcessingPipeline(pattern_engine=pattern_engine)
     response_manager = PatternResponseManager()
     
     # Set AI callers for response manager

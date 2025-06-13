@@ -1,6 +1,6 @@
-# Talk to Multiple AIs Through Claude Code
+# Junior AI Assistant for Claude Code
 
-🚀 **Make Claude Code even smarter by connecting it to Google Gemini, Grok-3, ChatGPT, and DeepSeek!**
+🚀 **Your intelligent assistant that proactively helps Claude Code with pattern detection and multi-AI consultations!**
 
 **⚡ You can use any combination - just the ones you have API keys for!**
 
@@ -16,8 +16,13 @@ Instead of switching between different AI websites, now you can simply ask Claud
 - **🚀 Grok-3** (xAI) - Paid API ✅  
 - **💬 ChatGPT** (OpenAI) - Paid API ✅
 - **🔮 DeepSeek** - Paid API ✅
+- **🌐 OpenRouter** - Multi-Model Gateway ✅
 
 **💡 You don't need all of them!** Start with just Gemini (it's free), then add others if you want.
+
+## 📋 Migrating from Multi-AI Collab?
+
+If you're upgrading from the previous Multi-AI MCP Server, please see our **[Migration Guide](MIGRATION.md)** for step-by-step instructions.
 
 ## 🚀 5-Minute Setup
 
@@ -44,6 +49,7 @@ chmod +x setup.sh
 - **Grok** (Paid): [Get key here](https://console.x.ai/) 
 - **OpenAI** (Paid): [Get key here](https://platform.openai.com/api-keys)
 - **DeepSeek** (Paid): [Get key here](https://platform.deepseek.com/)
+- **OpenRouter** (Paid): [Get key here](https://openrouter.ai/keys)
 
 **💡 Pro tip:** Start with just Gemini (it's free), then add others later if you want.
 
@@ -105,7 +111,7 @@ Once installed, you just talk to Claude Code normally and ask it to use the othe
 ## 🔧 Configuration
 
 ### API Keys & Models
-Edit `~/.claude-mcp-servers/multi-ai-collab/credentials.json`:
+Edit `~/.claude-mcp-servers/junior-ai/credentials.json`:
 
 ```json
 {
@@ -123,6 +129,11 @@ Edit `~/.claude-mcp-servers/multi-ai-collab/credentials.json`:
     "api_key": "your-openai-key",
     "model": "gpt-4o",
     "enabled": true
+  },
+  "openrouter": {
+    "api_key": "your-openrouter-key",
+    "model": "openai/gpt-4o",
+    "enabled": true
   }
 }
 ```
@@ -137,6 +148,7 @@ Edit `~/.claude-mcp-servers/multi-ai-collab/credentials.json`:
 - **Grok**: [xAI Console](https://console.x.ai/) (Paid)
 - **OpenAI**: [OpenAI Platform](https://platform.openai.com/api-keys) (Paid)
 - **DeepSeek**: [DeepSeek Platform](https://platform.deepseek.com/) (Paid)
+- **OpenRouter**: [OpenRouter Keys](https://openrouter.ai/keys) (Paid)
 
 ## 🌟 Why Have Multiple AIs?
 
@@ -158,6 +170,10 @@ Think of it like having a team of experts with different personalities:
   - Strong in math, coding, and logical reasoning
   - Best for: Complex algorithms, mathematical problems, code optimization
 
+- **🌐 OpenRouter**: The multi-model gateway
+  - Access to multiple models through one API
+  - Best for: Model comparison, fallback options, cost optimization
+
 **Real Benefits:**
 - **Better Decisions**: Get 2-3 opinions before making important choices
 - **Learn Faster**: See how different AIs approach the same problem  
@@ -172,10 +188,12 @@ Think of it like having a team of experts with different personalities:
 - **Only Grok?** Get xAI's unique perspective and humor  
 - **Only ChatGPT?** Use OpenAI's well-established models
 - **Only DeepSeek?** Get specialized reasoning and coding help
+- **Only OpenRouter?** Access multiple models through one gateway
 - **Gemini + ChatGPT?** Compare Google vs OpenAI approaches!
 - **Grok + DeepSeek?** Creative thinking meets logical reasoning!
+- **OpenRouter + Any AI?** Fallback options and model diversity!
 - **Any 3 AIs?** Excellent multi-perspective collaboration!
-- **Have all 4?** Ultimate AI collaboration with maximum diversity!
+- **Have all 5?** Ultimate AI collaboration with maximum diversity!
 
 The server automatically adapts to your available AIs. Tools for unavailable AIs simply won't appear in Claude Code.
 
@@ -184,10 +202,11 @@ The server automatically adapts to your available AIs. Tools for unavailable AIs
 - Add **ChatGPT** for proven OpenAI capabilities  
 - Include **Grok** for unique xAI insights
 - Add **DeepSeek** for specialized reasoning tasks
+- Use **OpenRouter** for flexible model access and cost optimization
 
 ## 🔒 Security Notes
 
-- **API keys stored locally**: All credentials are in `~/.claude-mcp-servers/multi-ai-collab/credentials.json`
+- **API keys stored locally**: All credentials are in `~/.claude-mcp-servers/junior-ai/credentials.json`
 - **Never committed to git**: The `.gitignore` file excludes all credential files
 - **Optional AIs**: Only AIs with valid keys are loaded
 - **Graceful failures**: Failed AI connections don't break the server
@@ -200,12 +219,12 @@ The server automatically adapts to your available AIs. Tools for unavailable AIs
 **MCP not showing up?**
 ```bash
 claude mcp list
-# Should show "multi-ai-collab"
+# Should show "junior-ai"
 ```
 
 **AI not responding?**
 ```bash
-mcp__multi-ai-collab__server_status
+mcp__junior-ai__server_status
 # Check which AIs are enabled and working
 ```
 
@@ -216,14 +235,14 @@ mcp__multi-ai-collab__server_status
 
 **Reinstall:**
 ```bash
-claude mcp remove multi-ai-collab
+claude mcp remove junior-ai
 ./setup.sh
 ```
 
 ## 📁 File Structure
 
 ```
-~/.claude-mcp-servers/multi-ai-collab/
+~/.claude-mcp-servers/junior-ai/
 ├── server.py           # Main MCP server
 ├── credentials.json    # API keys and configuration
 └── requirements.txt    # Python dependencies
@@ -234,16 +253,16 @@ claude mcp remove multi-ai-collab
 ### Temperature Control for All AIs
 ```bash
 # Creative writing with high temperature
-mcp__multi-ai-collab__ask_gemini
+mcp__junior-ai__ask_gemini
   prompt: "Write a creative story about AI collaboration"
   temperature: 0.9
 
-mcp__multi-ai-collab__ask_openai
+mcp__junior-ai__ask_openai
   prompt: "Write a creative story about AI collaboration" 
   temperature: 0.9
 
 # Technical explanations with low temperature
-mcp__multi-ai-collab__ask_grok
+mcp__junior-ai__ask_grok
   prompt: "Explain how TCP/IP works"
   temperature: 0.2
 ```
@@ -251,17 +270,17 @@ mcp__multi-ai-collab__ask_grok
 ### Specialized Code Reviews by AI
 ```bash
 # Gemini: Technical accuracy focus
-mcp__multi-ai-collab__gemini_code_review
+mcp__junior-ai__gemini_code_review
   code: "[your code]"
   focus: "technical accuracy"
 
 # ChatGPT: Best practices focus  
-mcp__multi-ai-collab__openai_code_review
+mcp__junior-ai__openai_code_review
   code: "[your code]"
   focus: "best practices"
 
 # Grok: Creative solutions focus
-mcp__multi-ai-collab__grok_code_review
+mcp__junior-ai__grok_code_review
   code: "[your code]"
   focus: "alternative approaches"
 ```
@@ -269,17 +288,17 @@ mcp__multi-ai-collab__grok_code_review
 ### Multi-AI Workflows
 ```bash
 # Step 1: Get all perspectives
-mcp__multi-ai-collab__ask_all_ais
+mcp__junior-ai__ask_all_ais
   prompt: "How should I structure a microservices architecture?"
 
 # Step 2: Have top AIs debate specifics
-mcp__multi-ai-collab__ai_debate
+mcp__junior-ai__ai_debate
   topic: "Event-driven vs REST for microservices communication"
   ai1: "gemini"
   ai2: "openai"
 
 # Step 3: Get Grok's creative alternative
-mcp__multi-ai-collab__ask_grok
+mcp__junior-ai__ask_grok
   prompt: "What's a creative alternative to traditional microservices?"
 ```
 

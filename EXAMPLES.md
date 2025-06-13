@@ -1,4 +1,4 @@
-# Real-World Examples: Talking to Multiple AIs Through Claude Code
+# Real-World Examples: Using Junior AI Assistant with Claude Code
 
 ## 🗣️ Just Talk Naturally to Claude!
 
@@ -82,6 +82,16 @@ function login(username, password) {
 
 **What happens:** DeepSeek will analyze the algorithm mathematically and suggest performance improvements with detailed reasoning.
 
+### Example 10: Model Routing with OpenRouter
+**You:** "Claude, I need a cost-effective solution. Ask OpenRouter to analyze this using their auto mode."
+
+**What happens:** OpenRouter will automatically select the most appropriate model based on your query, balancing cost and performance.
+
+### Example 11: Multi-Model Comparison via OpenRouter
+**You:** "Claude, can you use OpenRouter to get Claude-3.5-Sonnet's opinion on this architecture design?"
+
+**What happens:** OpenRouter will route your request to Anthropic's Claude model, giving you access to additional AI perspectives beyond the directly configured ones.
+
 ## 🏢 Real Project Scenarios
 
 ### Scenario 1: Starting a New Project
@@ -127,6 +137,11 @@ function login(username, password) {
 - "Claude, have DeepSeek optimize this algorithm's performance"
 - "Ask DeepSeek to solve this complex mathematical problem"
 - "Get DeepSeek's help with advanced coding challenges"
+
+**Ask for OpenRouter when you want:**
+- "Claude, ask OpenRouter using Claude-3.5-Sonnet for analysis"
+- "Have OpenRouter compare responses from different models"
+- "Use OpenRouter's auto mode to pick the best model for this task"
 
 ## 🚀 Advanced Workflows
 

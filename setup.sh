@@ -1,5 +1,5 @@
 #!/bin/bash
-# Multi-AI MCP Server Setup Script
+# Junior AI Assistant Setup Script
 
 set -e
 
@@ -10,8 +10,8 @@ BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo -e "${BLUE}🚀 Multi-AI MCP Server Setup${NC}"
-echo "Connect Claude Code with Gemini, Grok-3, ChatGPT, and DeepSeek!"
+echo -e "${BLUE}🚀 Junior AI Assistant Setup${NC}"
+echo "Connect Claude Code with multiple AI assistants for intelligent pattern detection!"
 echo ""
 
 # Check Python version
@@ -35,18 +35,18 @@ echo "✅ Claude Code CLI found"
 # Create directory
 echo ""
 echo "📁 Creating MCP server directory..."
-mkdir -p ~/.claude-mcp-servers/multi-ai-collab
+mkdir -p ~/.claude-mcp-servers/junior-ai
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Copy server files
 echo "📋 Installing server..."
-cp "$SCRIPT_DIR/server.py" ~/.claude-mcp-servers/multi-ai-collab/
+cp "$SCRIPT_DIR/server.py" ~/.claude-mcp-servers/junior-ai/
 
 # Create credentials.json from template if it doesn't exist
-if [ ! -f ~/.claude-mcp-servers/multi-ai-collab/credentials.json ]; then
-    cp "$SCRIPT_DIR/credentials.template.json" ~/.claude-mcp-servers/multi-ai-collab/credentials.json
+if [ ! -f ~/.claude-mcp-servers/junior-ai/credentials.json ]; then
+    cp "$SCRIPT_DIR/credentials.template.json" ~/.claude-mcp-servers/junior-ai/credentials.json
     echo "📄 Created credentials.json from template"
 fi
 
@@ -86,12 +86,12 @@ prompt_for_ai() {
             # Update credentials.json with new key and model
             python3 -c "
 import json
-with open('$HOME/.claude-mcp-servers/multi-ai-collab/credentials.json', 'r') as f:
+with open('$HOME/.claude-mcp-servers/junior-ai/credentials.json', 'r') as f:
     creds = json.load(f)
 creds['$(echo $service_name | tr '[:upper:]' '[:lower:]')']['api_key'] = '$new_key'
 creds['$(echo $service_name | tr '[:upper:]' '[:lower:]')']['model'] = '$model_choice'
 creds['$(echo $service_name | tr '[:upper:]' '[:lower:]')']['enabled'] = True
-with open('$HOME/.claude-mcp-servers/multi-ai-collab/credentials.json', 'w') as f:
+with open('$HOME/.claude-mcp-servers/junior-ai/credentials.json', 'w') as f:
     json.dump(creds, f, indent=2)
 "
             echo -e "${GREEN}✅ $service_name configured with model: $model_choice${NC}"
@@ -112,10 +112,11 @@ echo "🔧 Configuring API keys..."
 echo "You can skip any AI you don't have an API key for - the server will work with whatever you configure!"
 
 # Read current credentials
-GEMINI_KEY=$(python3 -c "import json; f=open('$HOME/.claude-mcp-servers/multi-ai-collab/credentials.json'); print(json.load(f)['gemini']['api_key'])")
-GROK_KEY=$(python3 -c "import json; f=open('$HOME/.claude-mcp-servers/multi-ai-collab/credentials.json'); print(json.load(f)['grok']['api_key'])")
-OPENAI_KEY=$(python3 -c "import json; f=open('$HOME/.claude-mcp-servers/multi-ai-collab/credentials.json'); print(json.load(f)['openai']['api_key'])")
-DEEPSEEK_KEY=$(python3 -c "import json; f=open('$HOME/.claude-mcp-servers/multi-ai-collab/credentials.json'); print(json.load(f)['deepseek']['api_key'])")
+GEMINI_KEY=$(python3 -c "import json; f=open('$HOME/.claude-mcp-servers/junior-ai/credentials.json'); print(json.load(f)['gemini']['api_key'])")
+GROK_KEY=$(python3 -c "import json; f=open('$HOME/.claude-mcp-servers/junior-ai/credentials.json'); print(json.load(f)['grok']['api_key'])")
+OPENAI_KEY=$(python3 -c "import json; f=open('$HOME/.claude-mcp-servers/junior-ai/credentials.json'); print(json.load(f)['openai']['api_key'])")
+DEEPSEEK_KEY=$(python3 -c "import json; f=open('$HOME/.claude-mcp-servers/junior-ai/credentials.json'); print(json.load(f)['deepseek']['api_key'])")
+OPENROUTER_KEY=$(python3 -c "import json; f=open('$HOME/.claude-mcp-servers/junior-ai/credentials.json'); print(json.load(f)['openrouter']['api_key'])")
 
 # Track configured AIs
 configured_ais=()
@@ -139,6 +140,10 @@ if prompt_for_ai "DeepSeek" "$DEEPSEEK_KEY" "API key from: https://platform.deep
     configured_ais+=("DeepSeek")
 fi
 
+if prompt_for_ai "OpenRouter" "$OPENROUTER_KEY" "API key from: https://openrouter.ai/keys" "openai/gpt-4o" "openai/gpt-4o, anthropic/claude-3.5-sonnet, google/gemini-pro, openrouter/auto"; then
+    configured_ais+=("OpenRouter")
+fi
+
 # Show summary
 echo ""
 if [ ${#configured_ais[@]} -eq 0 ]; then
@@ -146,21 +151,21 @@ if [ ${#configured_ais[@]} -eq 0 ]; then
     exit 1
 else
     echo -e "${GREEN}🎉 Configured AIs: ${configured_ais[*]}${NC}"
-    echo -e "${BLUE}💡 You can add more API keys later by editing: ~/.claude-mcp-servers/multi-ai-collab/credentials.json${NC}"
+    echo -e "${BLUE}💡 You can add more API keys later by editing: ~/.claude-mcp-servers/junior-ai/credentials.json${NC}"
 fi
 
 echo ""
 echo "🔧 Configuring Claude Code..."
 # Remove any existing MCP configuration
-claude mcp remove multi-ai-collab 2>/dev/null || true
+claude mcp remove junior-ai 2>/dev/null || true
 
 # Add MCP server with global scope
-claude mcp add --scope user multi-ai-collab python3 ~/.claude-mcp-servers/multi-ai-collab/server.py
+claude mcp add --scope user junior-ai python3 ~/.claude-mcp-servers/junior-ai/server.py
 
 echo ""
 echo -e "${GREEN}✅ Setup complete!${NC}"
 echo ""
-echo "🎉 Multi-AI MCP Server is ready!"
+echo "🎉 Junior AI Assistant is ready!"
 echo ""
 echo "Your configured AIs:"
 for ai in "${configured_ais[@]}"; do
@@ -168,6 +173,8 @@ for ai in "${configured_ais[@]}"; do
         "Gemini") echo "  • 🧠 Gemini (Google)" ;;
         "Grok-3") echo "  • 🚀 Grok-3 (xAI)" ;;
         "ChatGPT") echo "  • 💬 ChatGPT (OpenAI)" ;;
+        "DeepSeek") echo "  • 🔮 DeepSeek" ;;
+        "OpenRouter") echo "  • 🌐 OpenRouter (Multi-Model)" ;;
     esac
 done
 
@@ -181,20 +188,20 @@ fi
 echo ""
 echo "Try it out:"
 echo "  1. Run: claude"
-echo "  2. Type: /mcp (should show multi-ai-collab connected)"
-echo "  3. Use: mcp__multi-ai-collab__ask_gemini"
+echo "  2. Type: /mcp (should show junior-ai connected)"
+echo "  3. Use: mcp__junior-ai__ask_gemini"
 echo "         prompt: \"Hello from Claude!\""
 echo ""
 echo "Collaborative tools:"
-echo "  • mcp__multi-ai-collab__ask_all_ais - Ask all AIs the same question"
-echo "  • mcp__multi-ai-collab__ai_debate - Have two AIs debate a topic"
-echo "  • mcp__multi-ai-collab__server_status - Check which AIs are available"
+echo "  • mcp__junior-ai__ask_all_ais - Ask all AIs the same question"
+echo "  • mcp__junior-ai__ai_debate - Have two AIs debate a topic"
+echo "  • mcp__junior-ai__server_status - Check which AIs are available"
 echo ""
 echo "Individual AI tools:"
-echo "  • mcp__multi-ai-collab__ask_[ai_name]"
-echo "  • mcp__multi-ai-collab__[ai_name]_code_review"
+echo "  • mcp__junior-ai__ask_[ai_name]"
+echo "  • mcp__junior-ai__[ai_name]_code_review"
 echo ""
 echo "🔧 To add more API keys later, edit:"
-echo "   ~/.claude-mcp-servers/multi-ai-collab/credentials.json"
+echo "   ~/.claude-mcp-servers/junior-ai/credentials.json"
 echo ""
 echo "Enjoy the AI collaboration! 🚀"
