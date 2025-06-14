@@ -18,7 +18,7 @@ sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 1)
 
 # Import pattern detection components
 try:
-    from pattern_detection import PatternDetectionEngine, PatternCategory, PatternSeverity
+    from pattern_detection import PatternDetectionEngine, EnhancedPatternDetectionEngine, PatternCategory, PatternSeverity
     from text_processing_pipeline import TextProcessingPipeline, ProcessingResult
     from response_handlers import PatternResponseManager, ConsultationResponse
     PATTERN_DETECTION_AVAILABLE = True
@@ -121,7 +121,7 @@ if CREDENTIALS.get("openrouter", {}).get("enabled", False):
 if PATTERN_DETECTION_AVAILABLE:
     # Get context window size from config
     context_window_size = CREDENTIALS.get("pattern_detection", {}).get("context_window_size", 150)
-    pattern_engine = PatternDetectionEngine(context_window_size=context_window_size)
+    pattern_engine = EnhancedPatternDetectionEngine(context_window_size=context_window_size)
     
     # Configure caching
     cache_config = {
@@ -298,6 +298,36 @@ def handle_tools_list(request_id: Any) -> Dict[str, Any]:
                 "inputSchema": {
                     "type": "object",
                     "properties": {}
+                }
+            },
+            {
+                "name": "get_sensitivity_config",
+                "description": "Get current pattern detection sensitivity configuration",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {}
+                }
+            },
+            {
+                "name": "update_sensitivity",
+                "description": "Update pattern detection sensitivity settings",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "global_level": {
+                            "type": "string",
+                            "description": "Global sensitivity level",
+                            "enum": ["low", "medium", "high", "maximum"]
+                        },
+                        "category_overrides": {
+                            "type": "object",
+                            "description": "Category-specific sensitivity overrides",
+                            "additionalProperties": {
+                                "type": "string",
+                                "enum": ["low", "medium", "high", "maximum", null]
+                            }
+                        }
+                    }
                 }
             }
         ])
@@ -662,6 +692,80 @@ def handle_pattern_stats() -> str:
     
     return result
 
+def handle_get_sensitivity_config() -> str:
+    """Get current sensitivity configuration"""
+    if not PATTERN_DETECTION_AVAILABLE:
+        return "❌ Pattern detection is not available"
+    
+    try:
+        # Get current sensitivity info from the pattern engine
+        sensitivity_info = pattern_engine.get_sensitivity_info()
+        
+        result = f"""## 🎛️ Pattern Detection Sensitivity Configuration
+
+### Current Settings:
+- **Global Level**: {sensitivity_info['global_level']}
+- **Confidence Threshold**: {sensitivity_info['confidence_threshold']}
+- **Context Multiplier**: {sensitivity_info['context_multiplier']}x
+- **Min Matches for Consultation**: {sensitivity_info['min_matches_for_consultation']}
+- **Severity Threshold**: {sensitivity_info['severity_threshold']}
+- **Effective Context Window**: {sensitivity_info['effective_context_window']} chars
+
+### Category Overrides:"""
+        
+        overrides = sensitivity_info['category_overrides']
+        for category, override in overrides.items():
+            if override:
+                result += f"\n- **{category.upper()}**: {override}"
+            else:
+                result += f"\n- **{category.upper()}**: (using global level)"
+        
+        result += f"""
+
+### Available Sensitivity Levels:
+- **low**: Conservative detection - only obvious patterns
+- **medium**: Balanced detection - standard sensitivity  
+- **high**: Aggressive detection - catch potential issues
+- **maximum**: Maximum detection - catch everything possible
+
+Use `update_sensitivity` to modify these settings."""
+        
+        return result
+        
+    except Exception as e:
+        return f"❌ Error getting sensitivity config: {str(e)}"
+
+def handle_update_sensitivity(global_level: str = None, category_overrides: Dict[str, str] = None) -> str:
+    """Update sensitivity configuration"""
+    if not PATTERN_DETECTION_AVAILABLE:
+        return "❌ Pattern detection is not available"
+    
+    try:
+        # Update sensitivity settings
+        success = pattern_engine.update_sensitivity(global_level, category_overrides)
+        
+        if success:
+            result = "✅ Sensitivity configuration updated successfully!\n\n"
+            
+            # Show updated configuration
+            sensitivity_info = pattern_engine.get_sensitivity_info()
+            result += f"**New Global Level**: {sensitivity_info['global_level']}\n"
+            result += f"**New Confidence Threshold**: {sensitivity_info['confidence_threshold']}\n"
+            result += f"**New Context Window**: {sensitivity_info['effective_context_window']} chars\n"
+            
+            if category_overrides:
+                result += "\n**Updated Category Overrides**:\n"
+                for category, level in category_overrides.items():
+                    result += f"- {category.upper()}: {level}\n"
+            
+            result += "\n💡 Changes take effect immediately for new pattern detections."
+            return result
+        else:
+            return "❌ Failed to update sensitivity configuration. Check that the specified levels are valid."
+            
+    except Exception as e:
+        return f"❌ Error updating sensitivity: {str(e)}"
+
 def handle_tool_call(request_id: Any, params: Dict[str, Any]) -> Dict[str, Any]:
     """Handle tool execution"""
     tool_name = params.get("name")
@@ -683,6 +787,14 @@ def handle_tool_call(request_id: Any, params: Dict[str, Any]) -> Dict[str, Any]:
         
         elif tool_name == "pattern_stats":
             result = handle_pattern_stats()
+        
+        elif tool_name == "get_sensitivity_config":
+            result = handle_get_sensitivity_config()
+        
+        elif tool_name == "update_sensitivity":
+            global_level = arguments.get("global_level")
+            category_overrides = arguments.get("category_overrides")
+            result = handle_update_sensitivity(global_level, category_overrides)
         
         elif tool_name == "server_status":
             available_ais = list(AI_CLIENTS.keys())
