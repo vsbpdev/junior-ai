@@ -381,10 +381,11 @@ def outer():
         
         # Check indentation levels
         for match in matches:
-            if "nested" in match.base_match.context:
-                self.assertGreaterEqual(match.indentation_level, 3)
-            elif "less_nested" in match.base_match.context:
+            # Check for "less_nested" first since it contains "nested"
+            if "less_nested" in match.base_match.context:
                 self.assertLessEqual(match.indentation_level, 1)
+            elif "nested" in match.base_match.context:
+                self.assertGreaterEqual(match.indentation_level, 3)
 
 
 if __name__ == "__main__":

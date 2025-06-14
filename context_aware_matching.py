@@ -481,29 +481,44 @@ class ContextAwarePatternMatcher:
         line = text[line_start:line_end]
         pos_in_line = position - line_start
         
-        # Language-specific comment detection
-        if language in [CodeLanguage.PYTHON, CodeLanguage.RUST]:
-            comment_pos = line.find('#')
+        # Define comment patterns for better readability
+        SINGLE_LINE_COMMENT_CHARS = {
+            CodeLanguage.PYTHON: '#',
+            CodeLanguage.RUST: '#',
+            CodeLanguage.JAVASCRIPT: '//',
+            CodeLanguage.TYPESCRIPT: '//',
+            CodeLanguage.JAVA: '//',
+            CodeLanguage.CPP: '//',
+            CodeLanguage.GO: '//',
+        }
+        
+        # Check single-line comments
+        comment_char = SINGLE_LINE_COMMENT_CHARS.get(language)
+        if comment_char:
+            comment_pos = line.find(comment_char)
             if comment_pos != -1 and comment_pos < pos_in_line:
                 return True
-        elif language in [CodeLanguage.JAVASCRIPT, CodeLanguage.TYPESCRIPT, CodeLanguage.JAVA, CodeLanguage.CPP, CodeLanguage.GO]:
-            # Single line comments
-            comment_pos = line.find('//')
-            if comment_pos != -1 and comment_pos < pos_in_line:
-                return True
-            
-            # Multi-line comments (simplified check)
-            before_pos = text[:position]
-            after_pos = text[position:]
-            
-            last_open = before_pos.rfind('/*')
-            last_close = before_pos.rfind('*/')
-            
-            if last_open > last_close:
-                # We're inside a multi-line comment
-                next_close = after_pos.find('*/')
-                if next_close != -1:
-                    return True
+        
+        # Check multi-line comments for C-style languages
+        if language in [CodeLanguage.JAVASCRIPT, CodeLanguage.TYPESCRIPT, 
+                       CodeLanguage.JAVA, CodeLanguage.CPP, CodeLanguage.GO]:
+            return self._is_in_multiline_comment(text, position)
+        
+        return False
+    
+    def _is_in_multiline_comment(self, text: str, position: int) -> bool:
+        """Check if position is within a multi-line comment"""
+        before_pos = text[:position]
+        after_pos = text[position:]
+        
+        last_open = before_pos.rfind('/*')
+        last_close = before_pos.rfind('*/')
+        
+        # If last open is after last close, we might be in a comment
+        if last_open > last_close:
+            # Verify there's a closing comment after our position
+            next_close = after_pos.find('*/')
+            return next_close != -1
         
         return False
     
@@ -514,20 +529,39 @@ class ContextAwarePatternMatcher:
         if line_end == -1:
             line_end = len(text)
             
-        # Get the full line
-        full_line = text[line_start:line_end]
+        # Get the line containing the position
+        current_line = text[line_start:line_end]
         
         # Count leading spaces/tabs
-        indent = 0
-        for char in full_line:
+        indent_spaces = 0
+        for char in current_line:
             if char == ' ':
-                indent += 1
+                indent_spaces += 1
             elif char == '\t':
-                indent += 4  # Assume 4 spaces per tab
+                indent_spaces += 4  # Assume 4 spaces per tab
             else:
                 break
         
-        return indent // 4  # Return level, not spaces
+        # Determine indentation unit (usually 4 spaces, but can vary)
+        # Look at the file to find the indentation pattern
+        lines = text.split('\n')
+        indent_unit = 4  # Default
+        
+        # Try to detect indent unit from first few indented lines
+        for line in lines[:50]:  # Check first 50 lines
+            if line and line[0] == ' ':
+                # Count spaces at start
+                spaces = 0
+                for char in line:
+                    if char == ' ':
+                        spaces += 1
+                    else:
+                        break
+                if spaces > 0 and spaces < 8:  # Reasonable indent
+                    indent_unit = spaces
+                    break
+        
+        return indent_spaces // indent_unit  # Return level, not spaces
     
     def _extract_nearby_comments(self, text: str, position: int, window: int = 200) -> List[str]:
         """Extract comments near the position"""
