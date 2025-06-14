@@ -21,10 +21,16 @@ try:
     from pattern_detection import PatternDetectionEngine, EnhancedPatternDetectionEngine, PatternCategory, PatternSeverity
     from text_processing_pipeline import TextProcessingPipeline, ProcessingResult
     from response_handlers import PatternResponseManager, ConsultationResponse
+    from context_aware_matching import ContextAwarePatternMatcher
+    from ai_consultation_manager import AIConsultationManager
     PATTERN_DETECTION_AVAILABLE = True
+    CONTEXT_AWARE_AVAILABLE = True
+    AI_CONSULTATION_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Pattern detection not available: {e}", file=sys.stderr)
     PATTERN_DETECTION_AVAILABLE = False
+    CONTEXT_AWARE_AVAILABLE = False
+    AI_CONSULTATION_AVAILABLE = False
 
 # Server version
 __version__ = "2.1.0"  # Updated version with pattern detection
@@ -121,7 +127,13 @@ if CREDENTIALS.get("openrouter", {}).get("enabled", False):
 if PATTERN_DETECTION_AVAILABLE:
     # Get context window size from config
     context_window_size = CREDENTIALS.get("pattern_detection", {}).get("context_window_size", 150)
-    pattern_engine = EnhancedPatternDetectionEngine(context_window_size=context_window_size)
+    
+    # Use context-aware pattern matcher if available
+    if CONTEXT_AWARE_AVAILABLE:
+        base_engine = EnhancedPatternDetectionEngine(context_window_size=context_window_size)
+        pattern_engine = ContextAwarePatternMatcher(base_engine=base_engine)
+    else:
+        pattern_engine = EnhancedPatternDetectionEngine(context_window_size=context_window_size)
     
     # Configure caching
     cache_config = {
@@ -153,6 +165,15 @@ if PATTERN_DETECTION_AVAILABLE:
     
     response_manager.set_ai_callers(call_ai_wrapper, call_multiple_ais_wrapper)
     
+    # Initialize AI Consultation Manager if available
+    if AI_CONSULTATION_AVAILABLE:
+        ai_consultation_manager = AIConsultationManager(
+            ai_caller=call_ai_wrapper,
+            config=CREDENTIALS.get("ai_consultation", {})
+        )
+    else:
+        ai_consultation_manager = None
+    
     # Start the text processing pipeline
     text_pipeline.start()
     
@@ -169,6 +190,7 @@ else:
     pattern_engine = None
     text_pipeline = None
     response_manager = None
+    ai_consultation_manager = None
     pattern_config = {"enabled": False}
 
 def send_response(response: Dict[str, Any]):
@@ -331,6 +353,66 @@ def handle_tools_list(request_id: Any) -> Dict[str, Any]:
                 }
             }
         ])
+        
+        # AI Consultation Manager tools
+        if AI_CONSULTATION_AVAILABLE:
+            tools.extend([
+                {
+                    "name": "ai_consultation_strategy",
+                    "description": "Get recommended AI consultation strategy for given patterns",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "context": {
+                                "type": "string",
+                                "description": "Code context to analyze"
+                            },
+                            "priority": {
+                                "type": "string",
+                                "description": "Optimization priority",
+                                "enum": ["speed", "accuracy", "cost"],
+                                "default": "accuracy"
+                            }
+                        },
+                        "required": ["context"]
+                    }
+                },
+                {
+                    "name": "ai_consultation_metrics",
+                    "description": "Get AI consultation metrics and performance statistics",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {}
+                    }
+                },
+                {
+                    "name": "ai_consultation_audit",
+                    "description": "Get audit trail of recent AI consultations",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "limit": {
+                                "type": "integer",
+                                "description": "Number of recent consultations to retrieve",
+                                "default": 10
+                            },
+                            "pattern_category": {
+                                "type": "string",
+                                "description": "Filter by pattern category",
+                                "enum": ["security", "uncertainty", "algorithm", "gotcha", "architecture"]
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "ai_governance_report",
+                    "description": "Export governance and compliance report for AI consultations",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {}
+                    }
+                }
+            ])
     
     # Individual AI tools - comprehensive set
     for ai_name in AI_CLIENTS.keys():
@@ -561,29 +643,52 @@ def handle_tools_list(request_id: Any) -> Dict[str, Any]:
         }
     }
 
-def handle_pattern_check(text: str, auto_consult: bool = True) -> str:
+def handle_pattern_check(text: str, auto_consult: bool = True, filename: Optional[str] = None) -> str:
     """Handle pattern checking in text"""
     if not PATTERN_DETECTION_AVAILABLE or not pattern_config.get("enabled", True):
         return "❌ Pattern detection is not available or disabled"
     
-    # Detect patterns
-    patterns = pattern_engine.detect_patterns(text)
+    # Detect patterns using context-aware matching if available
+    if CONTEXT_AWARE_AVAILABLE and hasattr(pattern_engine, 'detect_with_context'):
+        contextual_patterns = pattern_engine.detect_with_context(text, filename)
+        patterns = [cp.base_match for cp in contextual_patterns]
+        # Store contextual patterns for later use
+        context_data = {
+            'contextual_patterns': contextual_patterns,
+            'has_test_code': any(cp.is_test_code for cp in contextual_patterns),
+            'has_comments': any(cp.is_commented_out for cp in contextual_patterns)
+        }
+    else:
+        patterns = pattern_engine.detect_patterns(text)
+        context_data = None
     
     if not patterns:
         return "✅ No patterns detected that require AI consultation."
     
     # Generate pattern summary
-    summary = pattern_engine.get_pattern_summary(patterns)
-    strategy = pattern_engine.get_consultation_strategy(patterns)
+    if hasattr(pattern_engine, 'base_engine'):
+        # Using context-aware matcher
+        summary = pattern_engine.base_engine.get_pattern_summary(patterns)
+        if context_data and 'contextual_patterns' in context_data:
+            strategy = pattern_engine.get_enhanced_consultation_strategy(context_data['contextual_patterns'])
+        else:
+            strategy = pattern_engine.base_engine.get_consultation_strategy(patterns)
+    else:
+        summary = pattern_engine.get_pattern_summary(patterns)
+        strategy = pattern_engine.get_consultation_strategy(patterns)
     
     result = f"""## 🔍 Pattern Detection Results
 
 **Patterns Found:** {summary['total_matches']}
 **Max Severity:** {summary['max_severity'].name if summary['max_severity'] else 'N/A'}
 **Consultation Strategy:** {strategy['strategy']}
-
-### Detected Categories:
 """
+    
+    # Add context insights if available
+    if 'context_insights' in strategy:
+        result += "\n**Context Insights:** " + "; ".join(strategy['context_insights']) + "\n"
+    
+    result += "\n### Detected Categories:\n"
     
     for category, data in summary['categories'].items():
         result += f"\n**{category.upper()}** ({data['count']} matches):\n"
@@ -609,13 +714,18 @@ def handle_pattern_check(text: str, auto_consult: bool = True) -> str:
     
     return result
 
-def handle_junior_consult(context: str, force_multi_ai: bool = False) -> str:
+def handle_junior_consult(context: str, force_multi_ai: bool = False, filename: Optional[str] = None) -> str:
     """Handle smart junior AI consultation"""
     if not PATTERN_DETECTION_AVAILABLE:
         return "❌ Pattern detection is not available"
     
-    # Detect patterns
-    patterns = pattern_engine.detect_patterns(context)
+    # Detect patterns using context-aware matching if available
+    contextual_patterns = None
+    if CONTEXT_AWARE_AVAILABLE and hasattr(pattern_engine, 'detect_with_context'):
+        contextual_patterns = pattern_engine.detect_with_context(context, filename)
+        patterns = [cp.base_match for cp in contextual_patterns]
+    else:
+        patterns = pattern_engine.detect_patterns(context)
     
     if not patterns and not force_multi_ai:
         # No patterns detected, provide general assistance
@@ -624,13 +734,27 @@ def handle_junior_consult(context: str, force_multi_ai: bool = False) -> str:
         response = call_ai(default_ai, prompt, 0.7)
         return f"## 💡 Junior AI Assistance\n\n{response}"
     
-    # Force multi-AI if requested
-    if force_multi_ai and patterns:
-        for pattern in patterns:
-            pattern.requires_multi_ai = True
-    
-    # Handle patterns
-    consultation_response = response_manager.handle_patterns(patterns, context)
+    # Use AI Consultation Manager if available
+    if AI_CONSULTATION_AVAILABLE and ai_consultation_manager:
+        # Let the consultation manager handle everything
+        preferences = {
+            'force_multi_ai': force_multi_ai,
+            'priority': 'accuracy' if pattern_config.get('accuracy_mode', True) else 'speed'
+        }
+        
+        consultation_response = ai_consultation_manager.execute_consultation(
+            patterns=patterns,
+            context=context,
+            contextual_patterns=contextual_patterns,
+            strategy=None  # Let it auto-select strategy
+        )
+    else:
+        # Fallback to original response manager
+        if force_multi_ai and patterns:
+            for pattern in patterns:
+                pattern.requires_multi_ai = True
+        
+        consultation_response = response_manager.handle_patterns(patterns, context)
     
     if not consultation_response:
         return "❌ Unable to generate consultation response"
@@ -641,8 +765,13 @@ def handle_junior_consult(context: str, force_multi_ai: bool = False) -> str:
 **Consultation ID:** {consultation_response.request_id}
 **Confidence Score:** {consultation_response.confidence_score:.2%}
 **AIs Consulted:** {', '.join(consultation_response.ai_responses.keys())}
-
 """
+    
+    # Add context insights if available
+    if strategy and 'context_insights' in strategy:
+        result += "**Context Insights:** " + "; ".join(strategy['context_insights']) + "\n"
+    
+    result += "\n"
     
     result += consultation_response.primary_recommendation
     
@@ -795,6 +924,102 @@ def handle_tool_call(request_id: Any, params: Dict[str, Any]) -> Dict[str, Any]:
             global_level = arguments.get("global_level")
             category_overrides = arguments.get("category_overrides")
             result = handle_update_sensitivity(global_level, category_overrides)
+        
+        # AI Consultation Manager tools
+        elif tool_name == "ai_consultation_strategy":
+            context = arguments.get("context", "")
+            priority = arguments.get("priority", "accuracy")
+            
+            if not AI_CONSULTATION_AVAILABLE or not ai_consultation_manager:
+                result = "❌ AI Consultation Manager is not available"
+            else:
+                # Detect patterns first
+                if CONTEXT_AWARE_AVAILABLE and hasattr(pattern_engine, 'detect_with_context'):
+                    contextual_patterns = pattern_engine.detect_with_context(context)
+                    patterns = [cp.base_match for cp in contextual_patterns]
+                else:
+                    patterns = pattern_engine.detect_patterns(context)
+                
+                if not patterns:
+                    result = "✅ No patterns detected requiring AI consultation."
+                else:
+                    strategy = ai_consultation_manager.select_ai_strategy(
+                        patterns, context, {'priority': priority}
+                    )
+                    
+                    result = f"""## 🎯 AI Consultation Strategy
+
+**Mode**: {strategy.consultation_mode}
+**Selected AIs**: {', '.join(strategy.ai_selection)}
+**Priority**: {strategy.priority}
+**Estimated Time**: {strategy.estimated_time:.1f} seconds
+**Estimated Cost**: {strategy.estimated_cost:.3f} units
+
+**Reasoning**: {strategy.reasoning}"""
+        
+        elif tool_name == "ai_consultation_metrics":
+            if not AI_CONSULTATION_AVAILABLE or not ai_consultation_manager:
+                result = "❌ AI Consultation Manager is not available"
+            else:
+                metrics = ai_consultation_manager.get_metrics_summary()
+                result = f"""## 📊 AI Consultation Metrics
+
+**Total Consultations**: {metrics['total_consultations']}
+**Success Rate**: {metrics['success_rate']}
+**Average Response Time**: {metrics['average_response_time']}
+**Average Confidence**: {metrics['average_confidence']}
+**Most Used AI**: {metrics['most_used_ai']}
+**Most Common Pattern**: {metrics['most_common_pattern']}
+**Last Updated**: {metrics['last_updated']}"""
+        
+        elif tool_name == "ai_consultation_audit":
+            limit = arguments.get("limit", 10)
+            pattern_category = arguments.get("pattern_category")
+            
+            if not AI_CONSULTATION_AVAILABLE or not ai_consultation_manager:
+                result = "❌ AI Consultation Manager is not available"
+            else:
+                audits = ai_consultation_manager.get_audit_trail(limit, pattern_category)
+                
+                result = f"## 📋 AI Consultation Audit Trail\n\n"
+                if not audits:
+                    result += "No consultations found."
+                else:
+                    for audit in audits:
+                        result += f"""### {audit['timestamp']}
+**ID**: {audit['consultation_id'][:8]}...
+**AIs**: {', '.join(audit['ais_consulted'])}
+**Mode**: {audit['mode']}
+**Confidence**: {audit['confidence']}
+**Time**: {audit['processing_time']}
+**Patterns**: {', '.join(audit['pattern_summary'].get('categories', []))}
+
+---
+"""
+        
+        elif tool_name == "ai_governance_report":
+            if not AI_CONSULTATION_AVAILABLE or not ai_consultation_manager:
+                result = "❌ AI Consultation Manager is not available"
+            else:
+                report = ai_consultation_manager.export_governance_report()
+                
+                result = f"""## 🏛️ AI Governance & Compliance Report
+
+### Consultation Metrics
+{json.dumps(report['consultation_metrics'], indent=2)}
+
+### AI Usage Distribution
+"""
+                for ai, count in report['ai_usage_distribution'].items():
+                    result += f"- **{ai}**: {count} consultations\n"
+                
+                result += f"\n### Pattern Distribution\n"
+                for pattern, count in report['pattern_distribution'].items():
+                    result += f"- **{pattern}**: {count} occurrences\n"
+                
+                result += f"\n### Compliance Notes\n"
+                for key, value in report['compliance_notes'].items():
+                    result += f"- **{key.replace('_', ' ').title()}**: {value}\n"
         
         elif tool_name == "server_status":
             available_ais = list(AI_CLIENTS.keys())

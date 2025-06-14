@@ -54,6 +54,7 @@ This codebase implements an MCP (Model Context Protocol) server with intelligent
    - Tool registration and execution framework
    - Pattern detection integration with auto-consultation
    - Graceful degradation when AIs are unavailable
+   - AI Consultation Manager integration
 
 2. **Pattern Detection System**
    - **pattern_detection.py**: Enhanced pattern detection engine with 5 categories:
@@ -62,15 +63,31 @@ This codebase implements an MCP (Model Context Protocol) server with intelligent
      - Algorithm (complexity, optimization needs)
      - Gotcha (common pitfalls, edge cases)
      - Architecture (design patterns, structural decisions)
+   - **context_aware_matching.py**: Context-aware pattern matching (NEW):
+     - Language-specific syntax analysis
+     - Test code detection to reduce false positives
+     - Comment vs. active code differentiation
+     - Semantic role understanding (parameters, returns, conditions)
+     - Scope-aware pattern detection
    - **text_processing_pipeline.py**: Asynchronous text processing with caching
    - **response_handlers.py**: AI consultation orchestration
    - **pattern_cache.py**: LRU caching for pattern detection results
 
-3. **Configuration System**
+3. **AI Consultation Manager** (NEW)
+   - **ai_consultation_manager.py**: Intelligent AI selection and coordination
+     - AI expertise profiling (security, algorithms, architecture, etc.)
+     - Smart AI selection based on pattern types and severity
+     - Multiple consultation modes: single, multi, consensus, debate
+     - Transparent audit trail and metrics tracking
+     - Governance and compliance reporting
+     - Performance optimization (cost vs. speed vs. accuracy)
+
+4. **Configuration System**
    - **credentials.json**: Runtime configuration (created from template)
      - API keys and model selections
      - Pattern detection settings
      - Cache configuration
+     - AI consultation preferences
    - **credentials.template.json**: Template with default configuration
 
 ### AI Integration Architecture
@@ -94,11 +111,17 @@ Each AI exposes 6 specialized tools:
 
 1. Text input → Pattern Detection Engine
 2. Pattern matching using keywords and regex
-3. Context extraction with line numbers
-4. Severity assessment (LOW/MEDIUM/HIGH/CRITICAL)
-5. Consultation strategy determination
-6. AI selection based on pattern type
-7. Response synthesis and formatting
+3. **Context-aware analysis** (NEW):
+   - Language detection (Python, JavaScript, TypeScript, Java, etc.)
+   - Syntax-aware scope extraction (function/class context)
+   - Test code detection (reduces false positives)
+   - Comment vs. active code differentiation
+   - Import analysis for better context
+4. Context extraction with line numbers
+5. Severity assessment (LOW/MEDIUM/HIGH/CRITICAL)
+6. Consultation strategy determination
+7. AI selection based on pattern type
+8. Response synthesis with context insights
 
 ### Tool Categories
 
@@ -106,6 +129,14 @@ Each AI exposes 6 specialized tools:
 - `pattern_check` - Analyze text for patterns
 - `junior_consult` - Smart AI consultation
 - `pattern_stats` - Detection statistics
+- `get_sensitivity_config` - View sensitivity settings
+- `update_sensitivity` - Modify detection sensitivity
+
+**AI Consultation Manager Tools:** (NEW)
+- `ai_consultation_strategy` - Get recommended AI strategy
+- `ai_consultation_metrics` - View performance metrics
+- `ai_consultation_audit` - Access consultation history
+- `ai_governance_report` - Export compliance report
 
 **Collaborative Tools (2+ AIs):**
 - `ask_all_ais` - Multi-AI responses
