@@ -23,14 +23,18 @@ try:
     from response_handlers import PatternResponseManager, ConsultationResponse
     from context_aware_matching import ContextAwarePatternMatcher
     from ai_consultation_manager import AIConsultationManager
+    from async_pattern_cache import AsyncPatternCache, get_global_cache, get_global_cache_metrics
+    from async_cached_pattern_engine import AsyncCachedPatternEngine, AsyncPatternDetectionPipeline
     PATTERN_DETECTION_AVAILABLE = True
     CONTEXT_AWARE_AVAILABLE = True
     AI_CONSULTATION_AVAILABLE = True
+    ASYNC_CACHE_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Pattern detection not available: {e}", file=sys.stderr)
     PATTERN_DETECTION_AVAILABLE = False
     CONTEXT_AWARE_AVAILABLE = False
     AI_CONSULTATION_AVAILABLE = False
+    ASYNC_CACHE_AVAILABLE = False
 
 # Server version
 __version__ = "2.1.0"  # Updated version with pattern detection
@@ -131,12 +135,40 @@ if PATTERN_DETECTION_AVAILABLE:
     # Use context-aware pattern matcher if available
     if CONTEXT_AWARE_AVAILABLE:
         base_engine = EnhancedPatternDetectionEngine(context_window_size=context_window_size)
-        pattern_engine = ContextAwarePatternMatcher(base_engine=base_engine)
+        sync_pattern_engine = ContextAwarePatternMatcher(base_engine=base_engine)
     else:
-        pattern_engine = EnhancedPatternDetectionEngine(context_window_size=context_window_size)
+        sync_pattern_engine = EnhancedPatternDetectionEngine(context_window_size=context_window_size)
     
-    # Configure caching
-    cache_config = {
+    # Configure async caching
+    async_cache_config = {
+        'max_size': CREDENTIALS.get("pattern_detection", {}).get("cache_max_size", 2000),
+        'max_memory_mb': CREDENTIALS.get("pattern_detection", {}).get("cache_max_memory_mb", 100),
+        'base_ttl_seconds': CREDENTIALS.get("pattern_detection", {}).get("cache_ttl_seconds", 300),
+        'enable_deduplication': CREDENTIALS.get("pattern_detection", {}).get("cache_deduplication", True),
+        'cleanup_interval': CREDENTIALS.get("pattern_detection", {}).get("cache_cleanup_interval", 60)
+    }
+    
+    # Create async cached pattern engine if async cache is available
+    if ASYNC_CACHE_AVAILABLE and CREDENTIALS.get("pattern_detection", {}).get("async_cache_enabled", True):
+        pattern_engine = AsyncCachedPatternEngine(
+            pattern_engine=sync_pattern_engine,
+            cache_config=async_cache_config,
+            enable_cache=True,
+            enable_deduplication=True
+        )
+        # Also create async pipeline for batch processing
+        async_pipeline = AsyncPatternDetectionPipeline(
+            engine=pattern_engine,
+            batch_size=CREDENTIALS.get("pattern_detection", {}).get("batch_size", 10),
+            max_concurrent=CREDENTIALS.get("pattern_detection", {}).get("max_concurrent", 5)
+        )
+    else:
+        # Fallback to sync pattern engine
+        pattern_engine = sync_pattern_engine
+        async_pipeline = None
+    
+    # Keep the original text pipeline for backward compatibility
+    legacy_cache_config = {
         'max_size': 1000,
         'ttl_seconds': CREDENTIALS.get("pattern_detection", {}).get("cache_ttl_seconds", 300),
         'persist_to_disk': False,  # Don't persist for MCP server
@@ -144,9 +176,9 @@ if PATTERN_DETECTION_AVAILABLE:
     }
     
     text_pipeline = TextProcessingPipeline(
-        pattern_engine=pattern_engine,
-        enable_cache=CREDENTIALS.get("pattern_detection", {}).get("cache_enabled", False),
-        cache_config=cache_config
+        pattern_engine=sync_pattern_engine,
+        enable_cache=CREDENTIALS.get("pattern_detection", {}).get("legacy_cache_enabled", False),
+        cache_config=legacy_cache_config
     )
     response_manager = PatternResponseManager()
     
@@ -188,6 +220,8 @@ if PATTERN_DETECTION_AVAILABLE:
     })
 else:
     pattern_engine = None
+    sync_pattern_engine = None
+    async_pipeline = None
     text_pipeline = None
     response_manager = None
     ai_consultation_manager = None
@@ -635,6 +669,58 @@ def handle_tools_list(request_id: Any) -> Dict[str, Any]:
             }
         ])
     
+    # Async cache tools (if available)
+    if ASYNC_CACHE_AVAILABLE and PATTERN_DETECTION_AVAILABLE:
+        tools.extend([
+            {
+                "name": "cache_stats",
+                "description": "Get async pattern cache statistics and performance metrics",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {}
+                }
+            },
+            {
+                "name": "clear_cache",
+                "description": "Clear the async pattern cache",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "confirm": {
+                            "type": "boolean",
+                            "description": "Confirm cache clearing",
+                            "default": False
+                        }
+                    }
+                }
+            },
+            {
+                "name": "async_pattern_check",
+                "description": "Async pattern detection with caching and deduplication",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "text": {
+                            "type": "string",
+                            "description": "Text to analyze for patterns"
+                        },
+                        "sensitivity_level": {
+                            "type": "string",
+                            "description": "Sensitivity level for detection",
+                            "enum": ["low", "medium", "high", "maximum"],
+                            "default": "medium"
+                        },
+                        "auto_consult": {
+                            "type": "boolean",
+                            "description": "Automatically consult AI if patterns detected",
+                            "default": True
+                        }
+                    },
+                    "required": ["text"]
+                }
+            }
+        ])
+    
     return {
         "jsonrpc": "2.0",
         "id": request_id,
@@ -894,6 +980,191 @@ def handle_update_sensitivity(global_level: str = None, category_overrides: Dict
             
     except Exception as e:
         return f"❌ Error updating sensitivity: {str(e)}"
+
+async def handle_cache_stats() -> str:
+    """Get async cache statistics"""
+    if not ASYNC_CACHE_AVAILABLE or not (ASYNC_CACHE_AVAILABLE and hasattr(pattern_engine, 'get_performance_stats')):
+        return "❌ Async cache is not available"
+    
+    try:
+        # Get performance stats from the async engine
+        stats = await pattern_engine.get_performance_stats()
+        
+        result = "## 📊 Async Pattern Cache Statistics\n\n"
+        
+        # Engine performance stats
+        result += "### Engine Performance:\n"
+        result += f"- Total Requests: {stats.get('total_requests', 0)}\n"
+        result += f"- Cache Hits: {stats.get('cache_hits', 0)}\n"
+        result += f"- Cache Misses: {stats.get('cache_misses', 0)}\n"
+        result += f"- Cache Hit Rate: {stats.get('cache_hit_rate', 0):.1f}%\n"
+        result += f"- Deduplication Saves: {stats.get('deduplication_saves', 0)}\n"
+        result += f"- Deduplication Rate: {stats.get('deduplication_rate', 0):.1f}%\n"
+        result += f"- Average Processing Time: {stats.get('avg_processing_time', 0):.3f}s\n"
+        
+        # Cache metrics
+        if 'cache_metrics' in stats:
+            cache_metrics = stats['cache_metrics']
+            result += "\n### Cache Metrics:\n"
+            result += f"- Cache Size: {cache_metrics.get('cache_size', 0)}/{cache_metrics.get('max_size', 0)}\n"
+            result += f"- Memory Usage: {cache_metrics.get('memory_usage_mb', 0):.1f}/{cache_metrics.get('max_memory_mb', 0)}MB\n"
+            result += f"- Cache Hits: {cache_metrics.get('hits', 0)}\n"
+            result += f"- Cache Misses: {cache_metrics.get('misses', 0)}\n"
+            result += f"- Cache Hit Rate: {cache_metrics.get('hit_rate', '0%')}\n"
+            result += f"- Evictions: {cache_metrics.get('evictions', 0)}\n"
+            result += f"- TTL Expirations: {cache_metrics.get('ttl_expirations', 0)}\n"
+            result += f"- Pending Requests: {cache_metrics.get('pending_requests', 0)}\n"
+            result += f"- Base TTL: {cache_metrics.get('base_ttl_seconds', 0)}s\n"
+            
+            # Pattern category statistics
+            if cache_metrics.get('pattern_category_stats'):
+                result += "\n### Pattern Category Stats:\n"
+                for category, count in cache_metrics['pattern_category_stats'].items():
+                    result += f"- {category.upper()}: {count}\n"
+            
+            # Sensitivity level statistics
+            if cache_metrics.get('sensitivity_level_stats'):
+                result += "\n### Sensitivity Level Stats:\n"
+                for level, count in cache_metrics['sensitivity_level_stats'].items():
+                    result += f"- {level.upper()}: {count}\n"
+        
+        # Global cache metrics (if using global cache)
+        try:
+            global_metrics = await get_global_cache_metrics()
+            if global_metrics != cache_metrics:  # Different from engine cache
+                result += "\n### Global Cache Metrics:\n"
+                result += f"- Global Cache Size: {global_metrics.get('cache_size', 0)}\n"
+                result += f"- Global Memory Usage: {global_metrics.get('memory_usage_mb', 0):.1f}MB\n"
+        except Exception:
+            pass  # Global cache not available
+        
+        result += "\n💡 Use `clear_cache` to reset cache statistics and free memory."
+        return result
+        
+    except Exception as e:
+        return f"❌ Error getting cache stats: {str(e)}"
+
+async def handle_clear_cache(confirm: bool = False) -> str:
+    """Clear the async cache"""
+    if not ASYNC_CACHE_AVAILABLE or not (ASYNC_CACHE_AVAILABLE and hasattr(pattern_engine, 'clear_cache')):
+        return "❌ Async cache is not available"
+    
+    if not confirm:
+        return """⚠️ **Cache Clear Confirmation Required**
+
+This will clear all cached pattern detection results and reset statistics.
+
+**Impact:**
+- All cached patterns will be removed
+- Cache statistics will be reset to zero
+- Subsequent pattern detections will need to be recomputed
+- Memory usage will be reduced
+
+To proceed, call this function with `confirm: true`"""
+    
+    try:
+        # Clear the cache
+        await pattern_engine.clear_cache()
+        
+        # Get fresh stats to confirm clearing
+        stats = await pattern_engine.get_performance_stats()
+        
+        result = "✅ **Async cache cleared successfully!**\n\n"
+        result += "### Post-Clear Status:\n"
+        if 'cache_metrics' in stats:
+            cache_metrics = stats['cache_metrics']
+            result += f"- Cache Size: {cache_metrics.get('cache_size', 0)}\n"
+            result += f"- Memory Usage: {cache_metrics.get('memory_usage_mb', 0):.1f}MB\n"
+            result += f"- Pending Requests: {cache_metrics.get('pending_requests', 0)}\n"
+        
+        result += "\n💡 Pattern detection performance may be slower until cache is repopulated."
+        return result
+        
+    except Exception as e:
+        return f"❌ Error clearing cache: {str(e)}"
+
+async def handle_async_pattern_check(text: str, sensitivity_level: str = "medium", auto_consult: bool = True) -> str:
+    """Handle async pattern checking with caching"""
+    if not ASYNC_CACHE_AVAILABLE or not (ASYNC_CACHE_AVAILABLE and hasattr(pattern_engine, 'detect_patterns_async')):
+        return "❌ Async pattern detection is not available"
+    
+    try:
+        # Use async pattern detection
+        result = await pattern_engine.detect_patterns_async(text, sensitivity_level)
+        
+        # Build response
+        response = f"## 🔍 Async Pattern Detection Results\n\n"
+        
+        # Performance info
+        response += f"### Performance:\n"
+        response += f"- Processing Time: {result.processing_time:.3f}s\n"
+        response += f"- Was Cached: {'✅ Yes' if result.was_cached else '❌ No'}\n"
+        response += f"- Was Deduplicated: {'✅ Yes' if result.was_deduplicated else '❌ No'}\n"
+        if result.cache_age is not None:
+            response += f"- Cache Age: {result.cache_age:.3f}s\n"
+        response += f"- Sensitivity Level: {result.sensitivity_level}\n"
+        
+        # Patterns found
+        response += f"\n### Patterns Found: {len(result.patterns)}\n"
+        
+        if not result.patterns:
+            response += "✅ No patterns detected that require AI consultation.\n"
+            return response
+        
+        # List patterns by category
+        patterns_by_category = {}
+        for pattern in result.patterns:
+            category = pattern.category.value
+            if category not in patterns_by_category:
+                patterns_by_category[category] = []
+            patterns_by_category[category].append(pattern)
+        
+        for category, patterns in patterns_by_category.items():
+            response += f"\n**{category.upper()}:**\n"
+            for pattern in patterns:
+                severity_emoji = {"low": "🔵", "medium": "🟡", "high": "🟠", "critical": "🔴"}
+                emoji = severity_emoji.get(pattern.severity.name.lower(), "⚪")
+                response += f"- {emoji} {pattern.keyword} (confidence: {pattern.confidence:.1f})\n"
+                if pattern.context:
+                    context_preview = pattern.context[:100] + "..." if len(pattern.context) > 100 else pattern.context
+                    response += f"  Context: `{context_preview}`\n"
+        
+        # Pattern summary
+        if result.summary:
+            response += f"\n### Summary:\n"
+            for key, value in result.summary.items():
+                if key != "categories":
+                    response += f"- {key.replace('_', ' ').title()}: {value}\n"
+        
+        # Consultation strategy
+        if result.strategy:
+            response += f"\n### Recommended Strategy:\n"
+            strategy_name = result.strategy.get('strategy', 'unknown')
+            response += f"- Strategy: {strategy_name}\n"
+            if 'reason' in result.strategy:
+                response += f"- Reason: {result.strategy['reason']}\n"
+            if 'ai_selection' in result.strategy:
+                response += f"- Recommended AIs: {', '.join(result.strategy['ai_selection'])}\n"
+        
+        # Auto-consult if requested
+        if auto_consult and result.patterns:
+            consultation_needed = await pattern_engine.should_trigger_consultation_async(result.patterns)
+            if consultation_needed:
+                response += "\n🤖 **Auto-consulting AIs based on detected patterns...**\n"
+                
+                # Use the existing junior_consult handler but make it work with async
+                try:
+                    # This would need to be adapted for async consultation
+                    # For now, just indicate that consultation would happen
+                    response += "\n💡 Consultation would be triggered here with detected patterns.\n"
+                    response += "Use the `junior_consult` tool with this text for AI consultation.\n"
+                except Exception as e:
+                    response += f"\n❌ Auto-consultation failed: {str(e)}\n"
+        
+        return response
+        
+    except Exception as e:
+        return f"❌ Error in async pattern detection: {str(e)}"
 
 def handle_tool_call(request_id: Any, params: Dict[str, Any]) -> Dict[str, Any]:
     """Handle tool execution"""
@@ -1191,6 +1462,32 @@ Provide specific, actionable feedback on:
             
             result = call_ai(ai_name, prompt, 0.5)
         
+        # Async cache tools
+        elif tool_name == "cache_stats":
+            import asyncio
+            if ASYNC_CACHE_AVAILABLE:
+                result = asyncio.run(handle_cache_stats())
+            else:
+                result = "❌ Async cache is not available"
+        
+        elif tool_name == "clear_cache":
+            import asyncio
+            confirm = arguments.get("confirm", False)
+            if ASYNC_CACHE_AVAILABLE:
+                result = asyncio.run(handle_clear_cache(confirm))
+            else:
+                result = "❌ Async cache is not available"
+        
+        elif tool_name == "async_pattern_check":
+            import asyncio
+            text = arguments.get("text", "")
+            sensitivity_level = arguments.get("sensitivity_level", "medium")
+            auto_consult = arguments.get("auto_consult", True)
+            if ASYNC_CACHE_AVAILABLE:
+                result = asyncio.run(handle_async_pattern_check(text, sensitivity_level, auto_consult))
+            else:
+                result = "❌ Async pattern detection is not available"
+        
         else:
             raise ValueError(f"Unknown tool: {tool_name}")
         
@@ -1220,6 +1517,20 @@ def cleanup():
     """Cleanup resources on shutdown"""
     if PATTERN_DETECTION_AVAILABLE and text_pipeline:
         text_pipeline.stop()
+    
+    # Cleanup async components
+    if ASYNC_CACHE_AVAILABLE:
+        import asyncio
+        try:
+            # Close async pattern engine if available
+            if ASYNC_CACHE_AVAILABLE and hasattr(pattern_engine, 'close'):
+                asyncio.run(pattern_engine.close())
+            
+            # Close async pipeline if available
+            if 'async_pipeline' in globals() and async_pipeline:
+                asyncio.run(async_pipeline.close())
+        except Exception as e:
+            print(f"Warning: Error during async cleanup: {e}", file=sys.stderr)
 
 def main():
     """Main server loop"""
