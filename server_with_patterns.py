@@ -9,8 +9,6 @@ import sys
 import os
 from typing import Dict, Any, Optional, List
 from pathlib import Path
-import time
-import threading
 
 # Ensure unbuffered output
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 1)
@@ -18,23 +16,13 @@ sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 1)
 
 # Import pattern detection components
 try:
-    from pattern_detection import PatternDetectionEngine, EnhancedPatternDetectionEngine, PatternCategory, PatternSeverity
+    from pattern_detection import PatternDetectionEngine, PatternCategory, PatternSeverity
     from text_processing_pipeline import TextProcessingPipeline, ProcessingResult
     from response_handlers import PatternResponseManager, ConsultationResponse
-    from context_aware_matching import ContextAwarePatternMatcher
-    from ai_consultation_manager import AIConsultationManager
-    from async_pattern_cache import AsyncPatternCache, get_global_cache, get_global_cache_metrics
-    from async_cached_pattern_engine import AsyncCachedPatternEngine, AsyncPatternDetectionPipeline
     PATTERN_DETECTION_AVAILABLE = True
-    CONTEXT_AWARE_AVAILABLE = True
-    AI_CONSULTATION_AVAILABLE = True
-    ASYNC_CACHE_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Pattern detection not available: {e}", file=sys.stderr)
     PATTERN_DETECTION_AVAILABLE = False
-    CONTEXT_AWARE_AVAILABLE = False
-    AI_CONSULTATION_AVAILABLE = False
-    ASYNC_CACHE_AVAILABLE = False
 
 # Server version
 __version__ = "2.1.0"  # Updated version with pattern detection
@@ -129,57 +117,8 @@ if CREDENTIALS.get("openrouter", {}).get("enabled", False):
 
 # Initialize pattern detection components if available
 if PATTERN_DETECTION_AVAILABLE:
-    # Get context window size from config
-    context_window_size = CREDENTIALS.get("pattern_detection", {}).get("context_window_size", 150)
-    
-    # Use context-aware pattern matcher if available
-    if CONTEXT_AWARE_AVAILABLE:
-        base_engine = EnhancedPatternDetectionEngine(context_window_size=context_window_size)
-        sync_pattern_engine = ContextAwarePatternMatcher(base_engine=base_engine)
-    else:
-        sync_pattern_engine = EnhancedPatternDetectionEngine(context_window_size=context_window_size)
-    
-    # Configure async caching
-    async_cache_config = {
-        'max_size': CREDENTIALS.get("pattern_detection", {}).get("cache_max_size", 2000),
-        'max_memory_mb': CREDENTIALS.get("pattern_detection", {}).get("cache_max_memory_mb", 100),
-        'base_ttl_seconds': CREDENTIALS.get("pattern_detection", {}).get("cache_ttl_seconds", 300),
-        'enable_deduplication': CREDENTIALS.get("pattern_detection", {}).get("cache_deduplication", True),
-        'cleanup_interval': CREDENTIALS.get("pattern_detection", {}).get("cache_cleanup_interval", 60)
-    }
-    
-    # Create async cached pattern engine if async cache is available
-    if ASYNC_CACHE_AVAILABLE and CREDENTIALS.get("pattern_detection", {}).get("async_cache_enabled", True):
-        pattern_engine = AsyncCachedPatternEngine(
-            pattern_engine=sync_pattern_engine,
-            cache_config=async_cache_config,
-            enable_cache=True,
-            enable_deduplication=True
-        )
-        # Also create async pipeline for batch processing
-        async_pipeline = AsyncPatternDetectionPipeline(
-            engine=pattern_engine,
-            batch_size=CREDENTIALS.get("pattern_detection", {}).get("batch_size", 10),
-            max_concurrent=CREDENTIALS.get("pattern_detection", {}).get("max_concurrent", 5)
-        )
-    else:
-        # Fallback to sync pattern engine
-        pattern_engine = sync_pattern_engine
-        async_pipeline = None
-    
-    # Keep the original text pipeline for backward compatibility
-    legacy_cache_config = {
-        'max_size': 1000,
-        'ttl_seconds': CREDENTIALS.get("pattern_detection", {}).get("cache_ttl_seconds", 300),
-        'persist_to_disk': False,  # Don't persist for MCP server
-        'cache_dir': None
-    }
-    
-    text_pipeline = TextProcessingPipeline(
-        pattern_engine=sync_pattern_engine,
-        enable_cache=CREDENTIALS.get("pattern_detection", {}).get("legacy_cache_enabled", False),
-        cache_config=legacy_cache_config
-    )
+    pattern_engine = PatternDetectionEngine()
+    text_pipeline = TextProcessingPipeline(pattern_engine=pattern_engine)
     response_manager = PatternResponseManager()
     
     # Set AI callers for response manager
@@ -197,15 +136,6 @@ if PATTERN_DETECTION_AVAILABLE:
     
     response_manager.set_ai_callers(call_ai_wrapper, call_multiple_ais_wrapper)
     
-    # Initialize AI Consultation Manager if available
-    if AI_CONSULTATION_AVAILABLE:
-        ai_consultation_manager = AIConsultationManager(
-            ai_caller=call_ai_wrapper,
-            config=CREDENTIALS.get("ai_consultation", {})
-        )
-    else:
-        ai_consultation_manager = None
-    
     # Start the text processing pipeline
     text_pipeline.start()
     
@@ -220,11 +150,8 @@ if PATTERN_DETECTION_AVAILABLE:
     })
 else:
     pattern_engine = None
-    sync_pattern_engine = None
-    async_pipeline = None
     text_pipeline = None
     response_manager = None
-    ai_consultation_manager = None
     pattern_config = {"enabled": False}
 
 def send_response(response: Dict[str, Any]):
@@ -275,8 +202,7 @@ def call_multiple_ais(prompt: str, ai_list: List[str], temperature: float = 0.7)
         response = call_ai(ai_name, prompt, temperature)
         results.append(f"## 🤖 {ai_name.upper()} Response:\n\n{response}")
     
-    separator = "\n\n" + "=" * 80 + "\n\n"
-    return separator.join(results)
+    return "\n\n" + "="*80 + "\n\n".join(results)
 
 def handle_initialize(request_id: Any) -> Dict[str, Any]:
     """Handle initialization"""
@@ -356,101 +282,11 @@ def handle_tools_list(request_id: Any) -> Dict[str, Any]:
                     "type": "object",
                     "properties": {}
                 }
-            },
-            {
-                "name": "get_sensitivity_config",
-                "description": "Get current pattern detection sensitivity configuration",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {}
-                }
-            },
-            {
-                "name": "update_sensitivity",
-                "description": "Update pattern detection sensitivity settings",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "global_level": {
-                            "type": "string",
-                            "description": "Global sensitivity level",
-                            "enum": ["low", "medium", "high", "maximum"]
-                        },
-                        "category_overrides": {
-                            "type": "object",
-                            "description": "Category-specific sensitivity overrides",
-                            "additionalProperties": {
-                                "type": "string",
-                                "enum": ["low", "medium", "high", "maximum", "null"]
-                            }
-                        }
-                    }
-                }
             }
         ])
-        
-        # AI Consultation Manager tools
-        if AI_CONSULTATION_AVAILABLE:
-            tools.extend([
-                {
-                    "name": "ai_consultation_strategy",
-                    "description": "Get recommended AI consultation strategy for given patterns",
-                    "inputSchema": {
-                        "type": "object",
-                        "properties": {
-                            "context": {
-                                "type": "string",
-                                "description": "Code context to analyze"
-                            },
-                            "priority": {
-                                "type": "string",
-                                "description": "Optimization priority",
-                                "enum": ["speed", "accuracy", "cost"],
-                                "default": "accuracy"
-                            }
-                        },
-                        "required": ["context"]
-                    }
-                },
-                {
-                    "name": "ai_consultation_metrics",
-                    "description": "Get AI consultation metrics and performance statistics",
-                    "inputSchema": {
-                        "type": "object",
-                        "properties": {}
-                    }
-                },
-                {
-                    "name": "ai_consultation_audit",
-                    "description": "Get audit trail of recent AI consultations",
-                    "inputSchema": {
-                        "type": "object",
-                        "properties": {
-                            "limit": {
-                                "type": "integer",
-                                "description": "Number of recent consultations to retrieve",
-                                "default": 10
-                            },
-                            "pattern_category": {
-                                "type": "string",
-                                "description": "Filter by pattern category",
-                                "enum": ["security", "uncertainty", "algorithm", "gotcha", "architecture"]
-                            }
-                        }
-                    }
-                },
-                {
-                    "name": "ai_governance_report",
-                    "description": "Export governance and compliance report for AI consultations",
-                    "inputSchema": {
-                        "type": "object",
-                        "properties": {}
-                    }
-                }
-            ])
     
     # Individual AI tools - comprehensive set
-    for ai_name in AI_CLIENTS.keys():
+    for ai_name in AI_CLIENTS:
         tools.extend([
             # Basic interaction
             {
@@ -670,58 +506,6 @@ def handle_tools_list(request_id: Any) -> Dict[str, Any]:
             }
         ])
     
-    # Async cache tools (if available)
-    if ASYNC_CACHE_AVAILABLE and PATTERN_DETECTION_AVAILABLE:
-        tools.extend([
-            {
-                "name": "cache_stats",
-                "description": "Get async pattern cache statistics and performance metrics",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {}
-                }
-            },
-            {
-                "name": "clear_cache",
-                "description": "Clear the async pattern cache",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "confirm": {
-                            "type": "boolean",
-                            "description": "Confirm cache clearing",
-                            "default": False
-                        }
-                    }
-                }
-            },
-            {
-                "name": "async_pattern_check",
-                "description": "Async pattern detection with caching and deduplication",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "text": {
-                            "type": "string",
-                            "description": "Text to analyze for patterns"
-                        },
-                        "sensitivity_level": {
-                            "type": "string",
-                            "description": "Sensitivity level for detection",
-                            "enum": ["low", "medium", "high", "maximum"],
-                            "default": "medium"
-                        },
-                        "auto_consult": {
-                            "type": "boolean",
-                            "description": "Automatically consult AI if patterns detected",
-                            "default": True
-                        }
-                    },
-                    "required": ["text"]
-                }
-            }
-        ])
-    
     return {
         "jsonrpc": "2.0",
         "id": request_id,
@@ -730,52 +514,29 @@ def handle_tools_list(request_id: Any) -> Dict[str, Any]:
         }
     }
 
-def handle_pattern_check(text: str, auto_consult: bool = True, filename: Optional[str] = None) -> str:
+def handle_pattern_check(text: str, auto_consult: bool = True) -> str:
     """Handle pattern checking in text"""
     if not PATTERN_DETECTION_AVAILABLE or not pattern_config.get("enabled", True):
         return "❌ Pattern detection is not available or disabled"
     
-    # Detect patterns using context-aware matching if available
-    if CONTEXT_AWARE_AVAILABLE and hasattr(pattern_engine, 'detect_with_context'):
-        contextual_patterns = pattern_engine.detect_with_context(text, filename)
-        patterns = [cp.base_match for cp in contextual_patterns]
-        # Store contextual patterns for later use
-        context_data = {
-            'contextual_patterns': contextual_patterns,
-            'has_test_code': any(cp.is_test_code for cp in contextual_patterns),
-            'has_comments': any(cp.is_commented_out for cp in contextual_patterns)
-        }
-    else:
-        patterns = pattern_engine.detect_patterns(text)
-        context_data = None
+    # Detect patterns
+    patterns = pattern_engine.detect_patterns(text)
     
     if not patterns:
         return "✅ No patterns detected that require AI consultation."
     
     # Generate pattern summary
-    if hasattr(pattern_engine, 'base_engine'):
-        # Using context-aware matcher
-        summary = pattern_engine.base_engine.get_pattern_summary(patterns)
-        if context_data and 'contextual_patterns' in context_data:
-            strategy = pattern_engine.get_enhanced_consultation_strategy(context_data['contextual_patterns'])
-        else:
-            strategy = pattern_engine.base_engine.get_consultation_strategy(patterns)
-    else:
-        summary = pattern_engine.get_pattern_summary(patterns)
-        strategy = pattern_engine.get_consultation_strategy(patterns)
+    summary = pattern_engine.get_pattern_summary(patterns)
+    strategy = pattern_engine.get_consultation_strategy(patterns)
     
     result = f"""## 🔍 Pattern Detection Results
 
 **Patterns Found:** {summary['total_matches']}
 **Max Severity:** {summary['max_severity'].name if summary['max_severity'] else 'N/A'}
 **Consultation Strategy:** {strategy['strategy']}
+
+### Detected Categories:
 """
-    
-    # Add context insights if available
-    if 'context_insights' in strategy:
-        result += "\n**Context Insights:** " + "; ".join(strategy['context_insights']) + "\n"
-    
-    result += "\n### Detected Categories:\n"
     
     for category, data in summary['categories'].items():
         result += f"\n**{category.upper()}** ({data['count']} matches):\n"
@@ -801,18 +562,13 @@ def handle_pattern_check(text: str, auto_consult: bool = True, filename: Optiona
     
     return result
 
-def handle_junior_consult(context: str, force_multi_ai: bool = False, filename: Optional[str] = None) -> str:
+def handle_junior_consult(context: str, force_multi_ai: bool = False) -> str:
     """Handle smart junior AI consultation"""
     if not PATTERN_DETECTION_AVAILABLE:
         return "❌ Pattern detection is not available"
     
-    # Detect patterns using context-aware matching if available
-    contextual_patterns = None
-    if CONTEXT_AWARE_AVAILABLE and hasattr(pattern_engine, 'detect_with_context'):
-        contextual_patterns = pattern_engine.detect_with_context(context, filename)
-        patterns = [cp.base_match for cp in contextual_patterns]
-    else:
-        patterns = pattern_engine.detect_patterns(context)
+    # Detect patterns
+    patterns = pattern_engine.detect_patterns(context)
     
     if not patterns and not force_multi_ai:
         # No patterns detected, provide general assistance
@@ -821,27 +577,13 @@ def handle_junior_consult(context: str, force_multi_ai: bool = False, filename: 
         response = call_ai(default_ai, prompt, 0.7)
         return f"## 💡 Junior AI Assistance\n\n{response}"
     
-    # Use AI Consultation Manager if available
-    if AI_CONSULTATION_AVAILABLE and ai_consultation_manager:
-        # Let the consultation manager handle everything
-        preferences = {
-            'force_multi_ai': force_multi_ai,
-            'priority': 'accuracy' if pattern_config.get('accuracy_mode', True) else 'speed'
-        }
-        
-        consultation_response = ai_consultation_manager.execute_consultation(
-            patterns=patterns,
-            context=context,
-            contextual_patterns=contextual_patterns,
-            strategy=None  # Let it auto-select strategy
-        )
-    else:
-        # Fallback to original response manager
-        if force_multi_ai and patterns:
-            for pattern in patterns:
-                pattern.requires_multi_ai = True
-        
-        consultation_response = response_manager.handle_patterns(patterns, context)
+    # Force multi-AI if requested
+    if force_multi_ai and patterns:
+        for pattern in patterns:
+            pattern.requires_multi_ai = True
+    
+    # Handle patterns
+    consultation_response = response_manager.handle_patterns(patterns, context)
     
     if not consultation_response:
         return "❌ Unable to generate consultation response"
@@ -852,9 +594,8 @@ def handle_junior_consult(context: str, force_multi_ai: bool = False, filename: 
 **Consultation ID:** {consultation_response.request_id}
 **Confidence Score:** {consultation_response.confidence_score:.2%}
 **AIs Consulted:** {', '.join(consultation_response.ai_responses.keys())}
+
 """
-    
-    result += "\n"
     
     result += consultation_response.primary_recommendation
     
@@ -904,265 +645,6 @@ def handle_pattern_stats() -> str:
     
     return result
 
-def handle_get_sensitivity_config() -> str:
-    """Get current sensitivity configuration"""
-    if not PATTERN_DETECTION_AVAILABLE:
-        return "❌ Pattern detection is not available"
-    
-    try:
-        # Get current sensitivity info from the pattern engine
-        sensitivity_info = pattern_engine.get_sensitivity_info()
-        
-        result = f"""## 🎛️ Pattern Detection Sensitivity Configuration
-
-### Current Settings:
-- **Global Level**: {sensitivity_info['global_level']}
-- **Confidence Threshold**: {sensitivity_info['confidence_threshold']}
-- **Context Multiplier**: {sensitivity_info['context_multiplier']}x
-- **Min Matches for Consultation**: {sensitivity_info['min_matches_for_consultation']}
-- **Severity Threshold**: {sensitivity_info['severity_threshold']}
-- **Effective Context Window**: {sensitivity_info['effective_context_window']} chars
-
-### Category Overrides:"""
-        
-        overrides = sensitivity_info['category_overrides']
-        for category, override in overrides.items():
-            if override:
-                result += f"\n- **{category.upper()}**: {override}"
-            else:
-                result += f"\n- **{category.upper()}**: (using global level)"
-        
-        result += f"""
-
-### Available Sensitivity Levels:
-- **low**: Conservative detection - only obvious patterns
-- **medium**: Balanced detection - standard sensitivity  
-- **high**: Aggressive detection - catch potential issues
-- **maximum**: Maximum detection - catch everything possible
-
-Use `update_sensitivity` to modify these settings."""
-        
-        return result
-        
-    except Exception as e:
-        return f"❌ Error getting sensitivity config: {str(e)}"
-
-def handle_update_sensitivity(global_level: str = None, category_overrides: Dict[str, str] = None) -> str:
-    """Update sensitivity configuration"""
-    if not PATTERN_DETECTION_AVAILABLE:
-        return "❌ Pattern detection is not available"
-    
-    try:
-        # Update sensitivity settings
-        success = pattern_engine.update_sensitivity(global_level, category_overrides)
-        
-        if success:
-            result = "✅ Sensitivity configuration updated successfully!\n\n"
-            
-            # Show updated configuration
-            sensitivity_info = pattern_engine.get_sensitivity_info()
-            result += f"**New Global Level**: {sensitivity_info['global_level']}\n"
-            result += f"**New Confidence Threshold**: {sensitivity_info['confidence_threshold']}\n"
-            result += f"**New Context Window**: {sensitivity_info['effective_context_window']} chars\n"
-            
-            if category_overrides:
-                result += "\n**Updated Category Overrides**:\n"
-                for category, level in category_overrides.items():
-                    result += f"- {category.upper()}: {level}\n"
-            
-            result += "\n💡 Changes take effect immediately for new pattern detections."
-            return result
-        else:
-            return "❌ Failed to update sensitivity configuration. Check that the specified levels are valid."
-            
-    except Exception as e:
-        return f"❌ Error updating sensitivity: {str(e)}"
-
-async def handle_cache_stats() -> str:
-    """Get async cache statistics"""
-    if not ASYNC_CACHE_AVAILABLE or not (ASYNC_CACHE_AVAILABLE and hasattr(pattern_engine, 'get_performance_stats')):
-        return "❌ Async cache is not available"
-    
-    try:
-        # Get performance stats from the async engine
-        stats = await pattern_engine.get_performance_stats()
-        
-        result = "## 📊 Async Pattern Cache Statistics\n\n"
-        
-        # Engine performance stats
-        result += "### Engine Performance:\n"
-        result += f"- Total Requests: {stats.get('total_requests', 0)}\n"
-        result += f"- Cache Hits: {stats.get('cache_hits', 0)}\n"
-        result += f"- Cache Misses: {stats.get('cache_misses', 0)}\n"
-        result += f"- Cache Hit Rate: {stats.get('cache_hit_rate', 0):.1f}%\n"
-        result += f"- Deduplication Saves: {stats.get('deduplication_saves', 0)}\n"
-        result += f"- Deduplication Rate: {stats.get('deduplication_rate', 0):.1f}%\n"
-        result += f"- Average Processing Time: {stats.get('avg_processing_time', 0):.3f}s\n"
-        
-        # Cache metrics
-        if 'cache_metrics' in stats:
-            cache_metrics = stats['cache_metrics']
-            result += "\n### Cache Metrics:\n"
-            result += f"- Cache Size: {cache_metrics.get('cache_size', 0)}/{cache_metrics.get('max_size', 0)}\n"
-            result += f"- Memory Usage: {cache_metrics.get('memory_usage_mb', 0):.1f}/{cache_metrics.get('max_memory_mb', 0)}MB\n"
-            result += f"- Cache Hits: {cache_metrics.get('hits', 0)}\n"
-            result += f"- Cache Misses: {cache_metrics.get('misses', 0)}\n"
-            result += f"- Cache Hit Rate: {cache_metrics.get('hit_rate', '0%')}\n"
-            result += f"- Evictions: {cache_metrics.get('evictions', 0)}\n"
-            result += f"- TTL Expirations: {cache_metrics.get('ttl_expirations', 0)}\n"
-            result += f"- Pending Requests: {cache_metrics.get('pending_requests', 0)}\n"
-            result += f"- Base TTL: {cache_metrics.get('base_ttl_seconds', 0)}s\n"
-            
-            # Pattern category statistics
-            if cache_metrics.get('pattern_category_stats'):
-                result += "\n### Pattern Category Stats:\n"
-                for category, count in cache_metrics['pattern_category_stats'].items():
-                    result += f"- {category.upper()}: {count}\n"
-            
-            # Sensitivity level statistics
-            if cache_metrics.get('sensitivity_level_stats'):
-                result += "\n### Sensitivity Level Stats:\n"
-                for level, count in cache_metrics['sensitivity_level_stats'].items():
-                    result += f"- {level.upper()}: {count}\n"
-        
-        # Global cache metrics (if using global cache)
-        try:
-            global_metrics = await get_global_cache_metrics()
-            if global_metrics != cache_metrics:  # Different from engine cache
-                result += "\n### Global Cache Metrics:\n"
-                result += f"- Global Cache Size: {global_metrics.get('cache_size', 0)}\n"
-                result += f"- Global Memory Usage: {global_metrics.get('memory_usage_mb', 0):.1f}MB\n"
-        except Exception:
-            pass  # Global cache not available
-        
-        result += "\n💡 Use `clear_cache` to reset cache statistics and free memory."
-        return result
-        
-    except Exception as e:
-        return f"❌ Error getting cache stats: {str(e)}"
-
-async def handle_clear_cache(confirm: bool = False) -> str:
-    """Clear the async cache"""
-    if not ASYNC_CACHE_AVAILABLE or not (ASYNC_CACHE_AVAILABLE and hasattr(pattern_engine, 'clear_cache')):
-        return "❌ Async cache is not available"
-    
-    if not confirm:
-        return """⚠️ **Cache Clear Confirmation Required**
-
-This will clear all cached pattern detection results and reset statistics.
-
-**Impact:**
-- All cached patterns will be removed
-- Cache statistics will be reset to zero
-- Subsequent pattern detections will need to be recomputed
-- Memory usage will be reduced
-
-To proceed, call this function with `confirm: true`"""
-    
-    try:
-        # Clear the cache
-        await pattern_engine.clear_cache()
-        
-        # Get fresh stats to confirm clearing
-        stats = await pattern_engine.get_performance_stats()
-        
-        result = "✅ **Async cache cleared successfully!**\n\n"
-        result += "### Post-Clear Status:\n"
-        if 'cache_metrics' in stats:
-            cache_metrics = stats['cache_metrics']
-            result += f"- Cache Size: {cache_metrics.get('cache_size', 0)}\n"
-            result += f"- Memory Usage: {cache_metrics.get('memory_usage_mb', 0):.1f}MB\n"
-            result += f"- Pending Requests: {cache_metrics.get('pending_requests', 0)}\n"
-        
-        result += "\n💡 Pattern detection performance may be slower until cache is repopulated."
-        return result
-        
-    except Exception as e:
-        return f"❌ Error clearing cache: {str(e)}"
-
-async def handle_async_pattern_check(text: str, sensitivity_level: str = "medium", auto_consult: bool = True) -> str:
-    """Handle async pattern checking with caching"""
-    if not ASYNC_CACHE_AVAILABLE or not (ASYNC_CACHE_AVAILABLE and hasattr(pattern_engine, 'detect_patterns_async')):
-        return "❌ Async pattern detection is not available"
-    
-    try:
-        # Use async pattern detection
-        result = await pattern_engine.detect_patterns_async(text, sensitivity_level)
-        
-        # Build response
-        response = f"## 🔍 Async Pattern Detection Results\n\n"
-        
-        # Performance info
-        response += f"### Performance:\n"
-        response += f"- Processing Time: {result.processing_time:.3f}s\n"
-        response += f"- Was Cached: {'✅ Yes' if result.was_cached else '❌ No'}\n"
-        response += f"- Was Deduplicated: {'✅ Yes' if result.was_deduplicated else '❌ No'}\n"
-        if result.cache_age is not None:
-            response += f"- Cache Age: {result.cache_age:.3f}s\n"
-        response += f"- Sensitivity Level: {result.sensitivity_level}\n"
-        
-        # Patterns found
-        response += f"\n### Patterns Found: {len(result.patterns)}\n"
-        
-        if not result.patterns:
-            response += "✅ No patterns detected that require AI consultation.\n"
-            return response
-        
-        # List patterns by category
-        patterns_by_category = {}
-        for pattern in result.patterns:
-            category = pattern.category.value
-            if category not in patterns_by_category:
-                patterns_by_category[category] = []
-            patterns_by_category[category].append(pattern)
-        
-        for category, patterns in patterns_by_category.items():
-            response += f"\n**{category.upper()}:**\n"
-            for pattern in patterns:
-                severity_emoji = {"low": "🔵", "medium": "🟡", "high": "🟠", "critical": "🔴"}
-                emoji = severity_emoji.get(pattern.severity.name.lower(), "⚪")
-                response += f"- {emoji} {pattern.keyword} (confidence: {pattern.confidence:.1f})\n"
-                if pattern.context:
-                    context_preview = pattern.context[:100] + "..." if len(pattern.context) > 100 else pattern.context
-                    response += f"  Context: `{context_preview}`\n"
-        
-        # Pattern summary
-        if result.summary:
-            response += f"\n### Summary:\n"
-            for key, value in result.summary.items():
-                if key != "categories":
-                    response += f"- {key.replace('_', ' ').title()}: {value}\n"
-        
-        # Consultation strategy
-        if result.strategy:
-            response += f"\n### Recommended Strategy:\n"
-            strategy_name = result.strategy.get('strategy', 'unknown')
-            response += f"- Strategy: {strategy_name}\n"
-            if 'reason' in result.strategy:
-                response += f"- Reason: {result.strategy['reason']}\n"
-            if 'ai_selection' in result.strategy:
-                response += f"- Recommended AIs: {', '.join(result.strategy['ai_selection'])}\n"
-        
-        # Auto-consult if requested
-        if auto_consult and result.patterns:
-            consultation_needed = await pattern_engine.should_trigger_consultation_async(result.patterns)
-            if consultation_needed:
-                response += "\n🤖 **Auto-consulting AIs based on detected patterns...**\n"
-                
-                # Use the existing junior_consult handler but make it work with async
-                try:
-                    # This would need to be adapted for async consultation
-                    # For now, just indicate that consultation would happen
-                    response += "\n💡 Consultation would be triggered here with detected patterns.\n"
-                    response += "Use the `junior_consult` tool with this text for AI consultation.\n"
-                except Exception as e:
-                    response += f"\n❌ Auto-consultation failed: {str(e)}\n"
-        
-        return response
-        
-    except Exception as e:
-        return f"❌ Error in async pattern detection: {str(e)}"
-
 def handle_tool_call(request_id: Any, params: Dict[str, Any]) -> Dict[str, Any]:
     """Handle tool execution"""
     tool_name = params.get("name")
@@ -1184,110 +666,6 @@ def handle_tool_call(request_id: Any, params: Dict[str, Any]) -> Dict[str, Any]:
         
         elif tool_name == "pattern_stats":
             result = handle_pattern_stats()
-        
-        elif tool_name == "get_sensitivity_config":
-            result = handle_get_sensitivity_config()
-        
-        elif tool_name == "update_sensitivity":
-            global_level = arguments.get("global_level")
-            category_overrides = arguments.get("category_overrides")
-            result = handle_update_sensitivity(global_level, category_overrides)
-        
-        # AI Consultation Manager tools
-        elif tool_name == "ai_consultation_strategy":
-            context = arguments.get("context", "")
-            priority = arguments.get("priority", "accuracy")
-            
-            if not AI_CONSULTATION_AVAILABLE or not ai_consultation_manager:
-                result = "❌ AI Consultation Manager is not available"
-            else:
-                # Detect patterns first
-                if CONTEXT_AWARE_AVAILABLE and hasattr(pattern_engine, 'detect_with_context'):
-                    contextual_patterns = pattern_engine.detect_with_context(context)
-                    patterns = [cp.base_match for cp in contextual_patterns]
-                else:
-                    patterns = pattern_engine.detect_patterns(context)
-                
-                if not patterns:
-                    result = "✅ No patterns detected requiring AI consultation."
-                else:
-                    strategy = ai_consultation_manager.select_ai_strategy(
-                        patterns, context, {'priority': priority}
-                    )
-                    
-                    result = f"""## 🎯 AI Consultation Strategy
-
-**Mode**: {strategy.consultation_mode}
-**Selected AIs**: {', '.join(strategy.ai_selection)}
-**Priority**: {strategy.priority}
-**Estimated Time**: {strategy.estimated_time:.1f} seconds
-**Estimated Cost**: {strategy.estimated_cost:.3f} units
-
-**Reasoning**: {strategy.reasoning}"""
-        
-        elif tool_name == "ai_consultation_metrics":
-            if not AI_CONSULTATION_AVAILABLE or not ai_consultation_manager:
-                result = "❌ AI Consultation Manager is not available"
-            else:
-                metrics = ai_consultation_manager.get_metrics_summary()
-                result = f"""## 📊 AI Consultation Metrics
-
-**Total Consultations**: {metrics['total_consultations']}
-**Success Rate**: {metrics['success_rate']}
-**Average Response Time**: {metrics['average_response_time']}
-**Average Confidence**: {metrics['average_confidence']}
-**Most Used AI**: {metrics['most_used_ai']}
-**Most Common Pattern**: {metrics['most_common_pattern']}
-**Last Updated**: {metrics['last_updated']}"""
-        
-        elif tool_name == "ai_consultation_audit":
-            limit = arguments.get("limit", 10)
-            pattern_category = arguments.get("pattern_category")
-            
-            if not AI_CONSULTATION_AVAILABLE or not ai_consultation_manager:
-                result = "❌ AI Consultation Manager is not available"
-            else:
-                audits = ai_consultation_manager.get_audit_trail(limit, pattern_category)
-                
-                result = f"## 📋 AI Consultation Audit Trail\n\n"
-                if not audits:
-                    result += "No consultations found."
-                else:
-                    for audit in audits:
-                        result += f"""### {audit['timestamp']}
-**ID**: {audit['consultation_id'][:8]}...
-**AIs**: {', '.join(audit['ais_consulted'])}
-**Mode**: {audit['mode']}
-**Confidence**: {audit['confidence']}
-**Time**: {audit['processing_time']}
-**Patterns**: {', '.join(audit['pattern_summary'].get('categories', []))}
-
----
-"""
-        
-        elif tool_name == "ai_governance_report":
-            if not AI_CONSULTATION_AVAILABLE or not ai_consultation_manager:
-                result = "❌ AI Consultation Manager is not available"
-            else:
-                report = ai_consultation_manager.export_governance_report()
-                
-                result = f"""## 🏛️ AI Governance & Compliance Report
-
-### Consultation Metrics
-{json.dumps(report['consultation_metrics'], indent=2)}
-
-### AI Usage Distribution
-"""
-                for ai, count in report['ai_usage_distribution'].items():
-                    result += f"- **{ai}**: {count} consultations\n"
-                
-                result += f"\n### Pattern Distribution\n"
-                for pattern, count in report['pattern_distribution'].items():
-                    result += f"- **{pattern}**: {count} occurrences\n"
-                
-                result += f"\n### Compliance Notes\n"
-                for key, value in report['compliance_notes'].items():
-                    result += f"- **{key.replace('_', ' ').title()}**: {value}\n"
         
         elif tool_name == "server_status":
             available_ais = list(AI_CLIENTS.keys())
@@ -1367,7 +745,7 @@ Configured Models:
             prompt += "\nProvide your recommendation and reasoning. Be concise but thorough."
             
             responses = []
-            for ai_name in AI_CLIENTS.keys():
+            for ai_name in AI_CLIENTS:
                 response = call_ai(ai_name, prompt, 0.4)
                 responses.append(f"## {ai_name.upper()} Recommendation:\n{response}")
             
@@ -1459,32 +837,6 @@ Provide specific, actionable feedback on:
             
             result = call_ai(ai_name, prompt, 0.5)
         
-        # Async cache tools
-        elif tool_name == "cache_stats":
-            import asyncio
-            if ASYNC_CACHE_AVAILABLE:
-                result = asyncio.run(handle_cache_stats())
-            else:
-                result = "❌ Async cache is not available"
-        
-        elif tool_name == "clear_cache":
-            import asyncio
-            confirm = arguments.get("confirm", False)
-            if ASYNC_CACHE_AVAILABLE:
-                result = asyncio.run(handle_clear_cache(confirm))
-            else:
-                result = "❌ Async cache is not available"
-        
-        elif tool_name == "async_pattern_check":
-            import asyncio
-            text = arguments.get("text", "")
-            sensitivity_level = arguments.get("sensitivity_level", "medium")
-            auto_consult = arguments.get("auto_consult", True)
-            if ASYNC_CACHE_AVAILABLE:
-                result = asyncio.run(handle_async_pattern_check(text, sensitivity_level, auto_consult))
-            else:
-                result = "❌ Async pattern detection is not available"
-        
         else:
             raise ValueError(f"Unknown tool: {tool_name}")
         
@@ -1514,20 +866,6 @@ def cleanup():
     """Cleanup resources on shutdown"""
     if PATTERN_DETECTION_AVAILABLE and text_pipeline:
         text_pipeline.stop()
-    
-    # Cleanup async components
-    if ASYNC_CACHE_AVAILABLE:
-        import asyncio
-        try:
-            # Close async pattern engine if available
-            if ASYNC_CACHE_AVAILABLE and hasattr(pattern_engine, 'close'):
-                asyncio.run(pattern_engine.close())
-            
-            # Close async pipeline if available
-            if 'async_pipeline' in globals() and async_pipeline:
-                asyncio.run(async_pipeline.close())
-        except Exception as e:
-            print(f"Warning: Error during async cleanup: {e}", file=sys.stderr)
 
 def main():
     """Main server loop"""
