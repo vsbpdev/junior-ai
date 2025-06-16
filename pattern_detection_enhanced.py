@@ -573,7 +573,7 @@ if __name__ == "__main__":
 def authenticate_user(username, password):
     # TODO: Add proper password hashing - this is not secure!
     if password == "admin123":  # FIXME: hardcoded password
-        api_key = "sk-1234567890abcdef"  # This should be encrypted
+        api_key = "sk-proj-abcdef123456789012345678901234567890"  # This should be encrypted
         return {"token": api_key, "expires": datetime.now() + timedelta(hours=1)}
     
     # Not sure if this O(n^2) algorithm is efficient enough

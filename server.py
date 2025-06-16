@@ -275,7 +275,8 @@ def call_multiple_ais(prompt: str, ai_list: List[str], temperature: float = 0.7)
         response = call_ai(ai_name, prompt, temperature)
         results.append(f"## 🤖 {ai_name.upper()} Response:\n\n{response}")
     
-    return "\n\n" + "="*80 + "\n\n".join(results)
+    separator = "\n\n" + "=" * 80 + "\n\n"
+    return separator.join(results)
 
 def handle_initialize(request_id: Any) -> Dict[str, Any]:
     """Handle initialization"""
@@ -380,7 +381,7 @@ def handle_tools_list(request_id: Any) -> Dict[str, Any]:
                             "description": "Category-specific sensitivity overrides",
                             "additionalProperties": {
                                 "type": "string",
-                                "enum": ["low", "medium", "high", "maximum", None]
+                                "enum": ["low", "medium", "high", "maximum", "null"]
                             }
                         }
                     }
@@ -852,10 +853,6 @@ def handle_junior_consult(context: str, force_multi_ai: bool = False, filename: 
 **Confidence Score:** {consultation_response.confidence_score:.2%}
 **AIs Consulted:** {', '.join(consultation_response.ai_responses.keys())}
 """
-    
-    # Add context insights if available
-    if strategy and 'context_insights' in strategy:
-        result += "**Context Insights:** " + "; ".join(strategy['context_insights']) + "\n"
     
     result += "\n"
     

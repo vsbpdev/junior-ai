@@ -302,10 +302,6 @@ class CachedPatternDetectionEngine:
                     )
                     patterns.append(pattern)
                 
-                # Add cache metadata
-                patterns._cached = True
-                patterns._cache_age = cached_result["cache_age"]
-                
                 return patterns
         
         # Not in cache, detect patterns
