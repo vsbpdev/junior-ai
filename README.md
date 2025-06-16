@@ -108,6 +108,49 @@ Once installed, you just talk to Claude Code normally and ask it to use the othe
 
 **🎉 The beauty is you don't need to remember any commands - just ask Claude naturally!**
 
+## 🚀 Advanced Features
+
+### 🧠 Intelligent Pattern Detection
+Junior AI automatically detects patterns in your code and context:
+- **Security Issues**: Passwords, API keys, encryption concerns
+- **Uncertainty**: TODOs, unclear implementations, questions
+- **Algorithm Complexity**: Performance bottlenecks, optimization needs
+- **Common Gotchas**: Edge cases, timezone issues, async problems
+- **Architecture Decisions**: Design patterns, system structure
+
+When patterns are detected, Junior AI automatically consults the most appropriate AIs!
+
+### 🎨 Response Synthesis System (NEW!)
+Junior AI doesn't just collect AI responses - it intelligently synthesizes them using different strategies:
+
+- **Consensus Strategy**: Finds common agreements and best practices (great for security)
+- **Debate Strategy**: Highlights different perspectives and trade-offs (perfect for architecture)
+- **Expert-Weighted Strategy**: Prioritizes responses based on AI expertise (ideal for algorithms)
+- **Comprehensive Strategy**: Includes all perspectives thoroughly (best for uncertainty)
+
+**Example:**
+> "Ask all AIs about password security"
+> 
+> Junior AI will:
+> 1. Detect the security pattern
+> 2. Consult multiple AIs automatically
+> 3. Synthesize responses using consensus strategy
+> 4. Present unified recommendations with confidence scores
+
+### 🎯 Smart AI Selection
+Based on detected patterns, Junior AI automatically selects the best AIs:
+- **Security → Gemini, OpenAI, Grok** (consensus approach)
+- **Algorithms → DeepSeek, Gemini, OpenAI** (expert weighting)
+- **Architecture → All AIs** (debate different approaches)
+- **Gotchas → Gemini, Grok** (experience-based insights)
+
+### 📊 Pattern Detection Tools
+- `pattern_check`: Analyze text for patterns
+- `junior_consult`: Smart AI consultation with automatic synthesis
+- `pattern_stats`: View detection statistics
+- `set_synthesis_strategy`: Choose how responses are combined
+- `get_sensitivity_config`: View pattern detection sensitivity
+
 ## 🔧 Configuration
 
 ### API Keys & Models
