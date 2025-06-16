@@ -515,7 +515,7 @@ class EnhancedPatternDetectionEngine:
             total_patterns = sum(cat["count"] for cat in categories.values())
             return f"Detected {total_patterns} patterns across {len(category_names)} categories: {', '.join(category_names)}"
     
-    def _recommend_ais(self, summary: Dict[str, any]) -> List[str]:
+    def _recommend_ais(self, summary: Dict[str, Any]) -> List[str]:
         """Enhanced AI recommendation based on pattern summary"""
         recommendations = []
         categories = list(summary["categories"].keys())
@@ -541,7 +541,7 @@ class EnhancedPatternDetectionEngine:
         
         return recommendations
     
-    def _determine_focus_areas(self, summary: Dict[str, any]) -> List[str]:
+    def _determine_focus_areas(self, summary: Dict[str, Any]) -> List[str]:
         """Determine specific focus areas for AI consultation"""
         focus_areas = []
         
@@ -555,7 +555,7 @@ class EnhancedPatternDetectionEngine:
             elif category_name == PatternCategory.ARCHITECTURE.value:
                 focus_areas.append("Design pattern recommendations")
                 focus_areas.append("Scalability and maintainability")
-            elif category_name == PatternCategory.Gotcha.value:
+            elif category_name == PatternCategory.GOTCHA.value:
                 focus_areas.append("Common pitfall prevention")
                 focus_areas.append("Edge case handling")
             elif category_name == PatternCategory.UNCERTAINTY.value:

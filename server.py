@@ -380,7 +380,7 @@ def handle_tools_list(request_id: Any) -> Dict[str, Any]:
                             "description": "Category-specific sensitivity overrides",
                             "additionalProperties": {
                                 "type": "string",
-                                "enum": ["low", "medium", "high", "maximum", null]
+                                "enum": ["low", "medium", "high", "maximum", None]
                             }
                         }
                     }

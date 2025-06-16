@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Edge case handling improvements"""
 
-from typing import Optional, List, Tuple
+from typing import List, Tuple
 import unicodedata
 
 class RobustTextProcessor:

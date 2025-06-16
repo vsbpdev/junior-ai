@@ -16,8 +16,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Task Management
 
 **IMPORTANT**: Always check TaskMaster tasks before determining next steps:
-- **Task List**: `/Users/denni1/Documents/GitHub/junior-ai/.taskmaster/tasks/tasks.json` - Machine-readable task definitions
-- **Human-Readable Tasks**: `/Users/denni1/Documents/GitHub/junior-ai/.taskmaster/tasks/task_*.txt` - Human-readable task descriptions
+- **Task List**: `./.taskmaster/tasks/tasks.json` - Machine-readable task definitions
+- **Human-Readable Tasks**: `./.taskmaster/tasks/task_*.txt` - Human-readable task descriptions
 - **Priority**: Check TaskMaster tasks FIRST before suggesting new work or asking what to do next
 
 ## Commands
@@ -113,7 +113,7 @@ The system supports 5 AI providers through a unified interface:
 Each AI exposes 6 specialized tools:
 1. `ask_{ai_name}` - General questions
 2. `{ai_name}_code_review` - Code analysis
-3. `{ai_name}_think_deep` - Deep analysis
+3. `{ai_name}_think_deep` - Profound analysis with extended reasoning
 4. `{ai_name}_brainstorm` - Creative solutions
 5. `{ai_name}_debug` - Debugging assistance
 6. `{ai_name}_architecture` - Design advice
@@ -127,7 +127,7 @@ Each AI exposes 6 specialized tools:
    - Syntax-aware scope extraction (function/class context)
    - Test code detection (reduces false positives)
    - Comment vs. active code differentiation
-   - Import analysis for better context
+   - Import analysis for enhanced understanding
 4. Context extraction with line numbers
 5. Severity assessment (LOW/MEDIUM/HIGH/CRITICAL)
 6. Consultation strategy determination
