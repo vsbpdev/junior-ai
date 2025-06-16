@@ -5,11 +5,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## CRITICAL SECURITY RULES
 
 **NEVER EVER CREATE PULL REQUESTS TO EXTERNAL REPOSITORIES**
-- **FORBIDDEN**: Creating PRs to ANY repository we don't own
-- **FORBIDDEN**: Using `gh pr create` without explicit verification of the target repository
-- **REQUIRED**: Always verify repository ownership before ANY GitHub operations
-- **REQUIRED**: Only create PRs to repositories explicitly owned by the current user
-- **REQUIRED**: Always use vsbpdev/junior-ai as the target repository
+- **FORBIDDEN**: Creating PRs to RaiAnsar/claude_code-multi-AI-MCP or ANY repository we don't own
+- **FORBIDDEN**: Using `gh pr create` without `--repo vsbpdev/junior-ai` flag
+- **REQUIRED**: ALWAYS use explicit repository: `gh pr create --repo vsbpdev/junior-ai`
+- **REQUIRED**: ALWAYS verify with `gh repo view --json nameWithOwner --jq .nameWithOwner` before ANY GitHub operation
+- **REQUIRED**: Only create PRs to vsbpdev/junior-ai - NO OTHER REPOSITORY
+- **WARNING**: This is a FORK - GitHub defaults to parent repo for PRs if not explicit
+- **MANDATORY**: Read GITHUB_SAFETY_CHECKLIST.md before ANY GitHub operation
 
 ## Task Management
 
