@@ -9,8 +9,6 @@ import sys
 import os
 from typing import Dict, Any, Optional, List
 from pathlib import Path
-import time
-import threading
 
 # Ensure unbuffered output
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 1)
@@ -288,7 +286,7 @@ def handle_tools_list(request_id: Any) -> Dict[str, Any]:
         ])
     
     # Individual AI tools - comprehensive set
-    for ai_name in AI_CLIENTS.keys():
+    for ai_name in AI_CLIENTS:
         tools.extend([
             # Basic interaction
             {
@@ -747,7 +745,7 @@ Configured Models:
             prompt += "\nProvide your recommendation and reasoning. Be concise but thorough."
             
             responses = []
-            for ai_name in AI_CLIENTS.keys():
+            for ai_name in AI_CLIENTS:
                 response = call_ai(ai_name, prompt, 0.4)
                 responses.append(f"## {ai_name.upper()} Recommendation:\n{response}")
             

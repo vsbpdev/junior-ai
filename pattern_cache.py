@@ -8,9 +8,8 @@ import json
 import hashlib
 import time
 from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from threading import Lock
-import os
 from pathlib import Path
 
 
@@ -222,7 +221,7 @@ class PatternDetectionCache:
                 json.dump(entry_dict, f, indent=2)
         except Exception as e:
             # Log error but don't fail
-            print(f"Failed to save cache entry: {e}")
+            print(f"Failed to save cache entry to {cache_file}: {e}")
     
     def _load_from_disk(self):
         """Load cache entries from disk"""

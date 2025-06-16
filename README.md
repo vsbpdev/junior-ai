@@ -284,7 +284,7 @@ claude mcp remove junior-ai
 
 ## 📁 File Structure
 
-```
+```text
 ~/.claude-mcp-servers/junior-ai/
 ├── server.py           # Main MCP server
 ├── credentials.json    # API keys and configuration

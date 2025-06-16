@@ -4,7 +4,6 @@
 import logging
 from typing import Optional, List
 from dataclasses import dataclass
-from enum import Enum
 
 logger = logging.getLogger(__name__)
 

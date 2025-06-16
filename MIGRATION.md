@@ -88,7 +88,11 @@ For automated find-and-replace in your files:
 # Save this as migrate_tools.sh
 
 # Find and replace in all .md, .txt, and script files
+# macOS:
 find . -type f \( -name "*.md" -o -name "*.txt" -o -name "*.sh" \) -exec sed -i '' 's/mcp__multi-ai-collab__/mcp__junior-ai__/g' {} +
+
+# Linux:
+# find . -type f \( -name "*.md" -o -name "*.txt" -o -name "*.sh" \) -exec sed -i 's/mcp__multi-ai-collab__/mcp__junior-ai__/g' {} +
 
 echo "Migration complete! Old tool names have been updated."
 ```

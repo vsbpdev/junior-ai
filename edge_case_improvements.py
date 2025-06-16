@@ -41,15 +41,23 @@ class RobustTextProcessor:
         
         return (line_num, column)
     
-    def handle_mixed_indentation(self, line: str) -> int:
-        """Handle files with mixed tabs and spaces"""
+    def handle_mixed_indentation(self, line: str, tab_size: int = 4) -> int:
+        """Handle files with mixed tabs and spaces
+        
+        Args:
+            line: The line to analyze
+            tab_size: Number of spaces per tab (default: 4)
+        
+        Returns:
+            The calculated indentation level
+        """
         indent = 0
         for char in line:
             if char == ' ':
                 indent += 1
             elif char == '\t':
-                # Use next tab stop (typically 4 or 8)
-                indent = ((indent // 4) + 1) * 4
+                # Use next tab stop
+                indent = ((indent // tab_size) + 1) * tab_size
             else:
                 break
         return indent
@@ -97,7 +105,7 @@ class RobustTextProcessor:
             if len(quote) == 1 and count % 2 != 0:
                 warnings.append(f"Unclosed {quote} quote detected")
             elif len(quote) == 3 and count % 2 != 0:
-                warnings.append(f"Unclosed triple quote detected")
+                warnings.append("Unclosed triple quote detected")
         
         # Check for unclosed brackets
         bracket_pairs = [('(', ')'), ('[', ']'), ('{', '}')]

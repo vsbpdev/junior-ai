@@ -260,23 +260,14 @@ class PatternDetectionEngine:
     
     def _deduplicate_matches(self, matches: List[PatternMatch]) -> List[PatternMatch]:
         """Remove duplicate matches at the same position"""
-        seen_positions = set()
-        unique_matches = []
+        position_map = {}
         
         for match in matches:
             position_key = (match.start_pos, match.end_pos)
-            if position_key not in seen_positions:
-                seen_positions.add(position_key)
-                unique_matches.append(match)
-            else:
-                # Keep the match with higher severity
-                for i, existing in enumerate(unique_matches):
-                    if (existing.start_pos, existing.end_pos) == position_key:
-                        if match.severity.value > existing.severity.value:
-                            unique_matches[i] = match
-                        break
+            if position_key not in position_map or match.severity.value > position_map[position_key].severity.value:
+                position_map[position_key] = match
         
-        return unique_matches
+        return list(position_map.values())
     
     def get_pattern_summary(self, matches: List[PatternMatch]) -> Dict[str, any]:
         """Generate a summary of detected patterns"""
@@ -323,10 +314,7 @@ class PatternDetectionEngine:
                 return True
         
         # Check if multiple lower-severity matches combined warrant consultation
-        if len(matches) >= 3:
-            return True
-        
-        return False
+        return len(matches) >= 3
     
     def get_consultation_strategy(self, matches: List[PatternMatch]) -> Dict[str, any]:
         """Determine the consultation strategy based on detected patterns"""
@@ -378,17 +366,17 @@ class PatternDetectionEngine:
         if summary["requires_multi_ai"]:
             # For critical patterns, use multiple AIs
             return ["gemini", "grok", "openai"]
-        else:
-            # For single AI consultation, choose based on category
-            primary_categories = list(summary["categories"].keys())
-            if PatternCategory.SECURITY.value in primary_categories:
-                return ["openai", "gemini"]  # Good for security analysis
-            elif PatternCategory.ALGORITHM.value in primary_categories:
-                return ["deepseek", "gemini"]  # Good for algorithms
-            elif PatternCategory.ARCHITECTURE.value in primary_categories:
-                return ["gemini", "grok"]  # Good for architecture
-            else:
-                return ["openrouter"]  # Default junior AI
+        
+        # For single AI consultation, choose based on category
+        primary_categories = list(summary["categories"].keys())
+        if PatternCategory.SECURITY.value in primary_categories:
+            return ["openai", "gemini"]  # Good for security analysis
+        if PatternCategory.ALGORITHM.value in primary_categories:
+            return ["deepseek", "gemini"]  # Good for algorithms
+        if PatternCategory.ARCHITECTURE.value in primary_categories:
+            return ["gemini", "grok"]  # Good for architecture
+        
+        return ["openrouter"]  # Default junior AI
 
 
 if __name__ == "__main__":

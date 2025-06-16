@@ -4,7 +4,6 @@ Tests for Response Synthesis Module
 """
 
 import unittest
-from unittest.mock import Mock, patch
 import json
 from response_synthesis import (
     ResponseSynthesizer, ResponseAnalyzer, SynthesisStrategy,
@@ -85,15 +84,37 @@ Important security points here.
         self.assertGreater(sim1, 0.3)  # Similar texts
         self.assertLess(sim2, 0.1)     # Different texts
     
-    def test_guess_language(self):
-        """Test programming language detection"""
-        python_code = "def function():\n    import os\n    return True"
-        js_code = "function test() {\n    const x = 5;\n    console.log(x);\n}"
-        java_code = "public class Main {\n    private String name;\n}"
+    def test_extract_code_blocks_with_language_guessing(self):
+        """Test code block extraction with automatic language detection"""
+        response = """Here's a solution without language specification:
+```
+def function():
+    import os
+    return True
+```
+
+And another example:
+```
+function test() {
+    const x = 5;
+    console.log(x);
+}
+```
+
+Java example:
+```
+public class Main {
+    private String name;
+}
+```
+"""
+        code_blocks = self.analyzer.extract_code_blocks(response)
         
-        self.assertEqual(self.analyzer._guess_language(python_code), "python")
-        self.assertEqual(self.analyzer._guess_language(js_code), "javascript")
-        self.assertEqual(self.analyzer._guess_language(java_code), "java")
+        # These should trigger _guess_language since no language is specified
+        self.assertEqual(len(code_blocks), 3)
+        self.assertEqual(code_blocks[0][0], "python")  # Guessed from 'def' and 'import'
+        self.assertEqual(code_blocks[1][0], "javascript")  # Guessed from 'function' and 'const'
+        self.assertEqual(code_blocks[2][0], "java")  # Guessed from 'public class'
 
 
 class TestConsensusSynthesisStrategy(unittest.TestCase):

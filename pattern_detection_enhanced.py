@@ -5,10 +5,9 @@ Improved context extraction and pattern matching
 """
 
 import re
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
-import json
 
 
 class PatternCategory(Enum):
@@ -403,7 +402,7 @@ class EnhancedPatternDetectionEngine:
         
         return unique_matches
     
-    def get_pattern_summary(self, matches: List[PatternMatch]) -> Dict[str, any]:
+    def get_pattern_summary(self, matches: List[PatternMatch]) -> Dict[str, Any]:
         """Generate an enhanced summary of detected patterns"""
         summary = {
             "total_matches": len(matches),
@@ -463,12 +462,9 @@ class EnhancedPatternDetectionEngine:
         
         # Check if multiple categories are involved (complex scenario)
         categories = set(match.category for match in matches)
-        if len(categories) >= 2:
-            return True
-        
-        return False
+        return len(categories) >= 2
     
-    def get_consultation_strategy(self, matches: List[PatternMatch]) -> Dict[str, any]:
+    def get_consultation_strategy(self, matches: List[PatternMatch]) -> Dict[str, Any]:
         """Enhanced consultation strategy based on detected patterns"""
         if not matches:
             return {"strategy": "none", "reason": "No patterns detected"}
@@ -505,7 +501,7 @@ class EnhancedPatternDetectionEngine:
         
         return strategy
     
-    def _generate_consultation_reason(self, summary: Dict[str, any]) -> str:
+    def _generate_consultation_reason(self, summary: Dict[str, Any]) -> str:
         """Generate a more detailed human-readable reason for consultation"""
         categories = summary["categories"]
         category_names = list(categories.keys())

@@ -62,6 +62,8 @@ def calculate_average(numbers):
     """Simple clarification needed - single AI consultation"""
     # TODO: Should I handle empty lists?
     # Not sure about edge cases
+    if not numbers:
+        return 0  # or raise ValueError("Cannot calculate average of empty list")
     return sum(numbers) / len(numbers)
 
 
@@ -72,8 +74,8 @@ def process_payment(card_number, amount):
     stored_card = card_number  # Should be tokenized
     
     # Algorithm concern: O(n²) validation
-    for digit in card_number:
-        for other in card_number:
+    for _digit in card_number:
+        for _other in card_number:
             # Inefficient validation
             pass
     

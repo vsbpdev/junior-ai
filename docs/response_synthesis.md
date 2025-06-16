@@ -29,7 +29,7 @@ The Response Synthesis system is a sophisticated module that intelligently combi
 
 ## Architecture
 
-```
+```text
 response_synthesis.py
 ├── ResponseAnalyzer
 │   ├── extract_code_blocks()

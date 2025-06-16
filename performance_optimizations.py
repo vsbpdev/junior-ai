@@ -4,16 +4,14 @@ Performance Optimizations for AI Consultation Manager
 Request deduplication, intelligent caching, and batch processing
 """
 
-import asyncio
 import hashlib
 import time
-from typing import Dict, List, Tuple, Optional, Any, Set, Callable
-from dataclasses import dataclass, field
+from typing import Dict, List, Tuple, Optional, Any, Callable
+from dataclasses import dataclass
 from collections import defaultdict
 import threading
 from concurrent.futures import ThreadPoolExecutor, Future
 import queue
-import weakref
 
 
 @dataclass
@@ -302,10 +300,7 @@ class IntelligentCache:
             return True
         
         # Large responses go to L2
-        if isinstance(value, dict) and len(str(value)) > 10000:
-            return False
-        
-        return True
+        return not (isinstance(value, dict) and len(str(value)) > 10000)
     
     def _add_to_l1(self, 
                   key: str,
@@ -491,7 +486,7 @@ class PerformanceOptimizedConsultationManager:
             # Process group together
             # This is a placeholder - actual implementation would
             # optimize AI calls for similar patterns
-            for req in group:
+            for _ in group:
                 results.append({'processed': True, 'pattern': pattern})
         
         self.metrics['batched'] += len(requests)

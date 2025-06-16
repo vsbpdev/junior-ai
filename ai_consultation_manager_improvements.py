@@ -350,7 +350,7 @@ def generate_fallback_recommendation(patterns: List[PatternMatch]) -> str:
         by_category[pattern.category].append(pattern)
     
     # Generate category-specific recommendations
-    for category, cat_patterns in by_category.items():
+    for category, _ in by_category.items():
         if category == PatternCategory.SECURITY:
             recommendations.append(
                 "🔒 Security: Review credential handling, validate inputs, "

@@ -72,7 +72,7 @@ class ResourceMonitor:
         
         if memory_mb > self.critical_threshold_mb:
             return f"CRITICAL: Memory usage ({memory_mb:.1f}MB) exceeds limit"
-        elif memory_mb > self.warning_threshold_mb:
+        if memory_mb > self.warning_threshold_mb:
             return f"WARNING: High memory usage ({memory_mb:.1f}MB)"
         
         return None
