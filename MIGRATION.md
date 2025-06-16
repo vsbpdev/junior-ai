@@ -33,8 +33,8 @@ cp ~/.claude-mcp-servers/multi-ai-collab/credentials.json ~/credentials_backup.j
 ### Step 2: Install Junior AI Assistant
 ```bash
 # Clone the new repository
-git clone https://github.com/RaiAnsar/claude_code-multi-AI-MCP.git
-cd claude_code-multi-AI-MCP
+git clone https://github.com/vsbpdev/junior-ai.git
+cd junior-ai
 
 # Run setup
 chmod +x setup.sh

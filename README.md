@@ -34,8 +34,8 @@ If you're upgrading from the previous Multi-AI MCP Server, please see our **[Mig
 
 ```bash
 # 1. Download the code
-git clone https://github.com/RaiAnsar/claude_code-multi-AI-MCP.git
-cd claude_code-multi-AI-MCP
+git clone https://github.com/vsbpdev/junior-ai.git
+cd junior-ai
 
 # 2. Run the automatic setup
 chmod +x setup.sh
