@@ -170,6 +170,14 @@ Each AI exposes 6 specialized tools:
 - `get_sensitivity_config` - View sensitivity settings
 - `update_sensitivity` - Modify detection sensitivity
 
+**Manual Override Tools:** (NEW)
+- `toggle_pattern_detection` - Enable/disable pattern detection globally
+- `toggle_category` - Enable/disable specific pattern categories
+- `add_pattern_keywords` - Add custom keywords to categories
+- `remove_pattern_keywords` - Remove keywords from categories
+- `list_pattern_keywords` - List all keywords for a category
+- `force_consultation` - Force AI consultation regardless of patterns
+
 **AI Consultation Manager Tools:** (NEW)
 - `ai_consultation_strategy` - Get recommended AI strategy
 - `ai_consultation_metrics` - View performance metrics
@@ -221,3 +229,15 @@ Each level affects:
 - Severity threshold for triggering consultations
 
 Category-specific overrides can be set (e.g., always use "high" for security patterns)
+
+### Manual Override Controls (NEW)
+
+The system includes comprehensive manual override capabilities:
+- **Global Enable/Disable**: Toggle pattern detection on/off
+- **Category Controls**: Enable/disable specific pattern categories
+- **Custom Keywords**: Add/remove keywords for any category
+- **Custom Patterns**: Add regex patterns for advanced matching
+- **Force Consultation**: Trigger AI consultation manually
+- **Keyword Management**: List, add, remove keywords dynamically
+
+See `docs/manual_override_controls.md` for detailed documentation.
