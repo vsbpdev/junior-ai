@@ -32,6 +32,8 @@ pip3 install -r requirements.txt
 pip3 install -r requirements-dev.txt
 ```
 
+**Note**: The `requirements-dev.txt` file includes all production dependencies via `-r requirements.txt`, so you only need to run this single command to install both production and development dependencies.
+
 Or use the setup script:
 ```bash
 ./setup.sh --dev
@@ -44,8 +46,13 @@ Dependencies are automatically scanned for vulnerabilities:
 1. **GitHub Actions**: Weekly automated scans using Safety and Bandit
 2. **Local Scanning**:
    ```bash
+   # Basic usage
    safety check
    bandit -r .
+   
+   # Generate JSON reports (same as CI)
+   safety check --json > safety-report.json
+   bandit -r . -f json -o bandit-report.json
    ```
 
 ## Updating Dependencies
