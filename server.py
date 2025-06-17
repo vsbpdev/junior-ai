@@ -386,6 +386,118 @@ def handle_tools_list(request_id: Any) -> Dict[str, Any]:
                         }
                     }
                 }
+            },
+            {
+                "name": "toggle_pattern_detection",
+                "description": "Enable or disable pattern detection globally",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean",
+                            "description": "True to enable, False to disable pattern detection"
+                        }
+                    },
+                    "required": ["enabled"]
+                }
+            },
+            {
+                "name": "toggle_category",
+                "description": "Enable or disable a specific pattern category",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "category": {
+                            "type": "string",
+                            "description": "Pattern category to toggle",
+                            "enum": ["security", "uncertainty", "algorithm", "gotcha", "architecture"]
+                        },
+                        "enabled": {
+                            "type": "boolean",
+                            "description": "True to enable, False to disable the category"
+                        }
+                    },
+                    "required": ["category", "enabled"]
+                }
+            },
+            {
+                "name": "add_pattern_keywords",
+                "description": "Add custom keywords to a pattern category",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "category": {
+                            "type": "string",
+                            "description": "Pattern category",
+                            "enum": ["security", "uncertainty", "algorithm", "gotcha", "architecture"]
+                        },
+                        "keywords": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Keywords to add to the category"
+                        }
+                    },
+                    "required": ["category", "keywords"]
+                }
+            },
+            {
+                "name": "remove_pattern_keywords",
+                "description": "Remove keywords from a pattern category",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "category": {
+                            "type": "string",
+                            "description": "Pattern category",
+                            "enum": ["security", "uncertainty", "algorithm", "gotcha", "architecture"]
+                        },
+                        "keywords": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Keywords to remove from the category"
+                        }
+                    },
+                    "required": ["category", "keywords"]
+                }
+            },
+            {
+                "name": "list_pattern_keywords",
+                "description": "List all keywords for a pattern category",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "category": {
+                            "type": "string",
+                            "description": "Pattern category",
+                            "enum": ["security", "uncertainty", "algorithm", "gotcha", "architecture"]
+                        }
+                    },
+                    "required": ["category"]
+                }
+            },
+            {
+                "name": "force_consultation",
+                "description": "Force AI consultation regardless of pattern detection",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "context": {
+                            "type": "string",
+                            "description": "Context to analyze"
+                        },
+                        "category": {
+                            "type": "string",
+                            "description": "Pattern category to use for consultation",
+                            "enum": ["security", "uncertainty", "algorithm", "gotcha", "architecture"]
+                        },
+                        "multi_ai": {
+                            "type": "boolean",
+                            "description": "Use multiple AIs for consultation",
+                            "default": False
+                        }
+                    },
+                    "required": ["context", "category"]
+                }
             }
         ])
         
@@ -978,6 +1090,189 @@ def handle_update_sensitivity(global_level: str = None, category_overrides: Dict
     except Exception as e:
         return f"❌ Error updating sensitivity: {str(e)}"
 
+def handle_toggle_pattern_detection(enabled: bool) -> str:
+    """Toggle pattern detection globally"""
+    if not PATTERN_DETECTION_AVAILABLE:
+        return "❌ Pattern detection is not available"
+    
+    try:
+        success = pattern_engine.set_pattern_detection_enabled(enabled)
+        
+        if success:
+            status = "enabled" if enabled else "disabled"
+            return f"✅ Pattern detection has been {status} globally.\n\n💡 This setting persists across sessions."
+        else:
+            return "❌ Failed to update pattern detection setting."
+    
+    except Exception as e:
+        return f"❌ Error toggling pattern detection: {str(e)}"
+
+def handle_toggle_category(category: str, enabled: bool) -> str:
+    """Toggle a specific pattern category"""
+    if not PATTERN_DETECTION_AVAILABLE:
+        return "❌ Pattern detection is not available"
+    
+    try:
+        success = pattern_engine.set_category_enabled(category, enabled)
+        
+        if success:
+            status = "enabled" if enabled else "disabled"
+            return f"✅ Pattern category '{category}' has been {status}.\n\n💡 This affects pattern detection for {category}-related keywords."
+        else:
+            return f"❌ Failed to update category setting. Invalid category: {category}"
+    
+    except Exception as e:
+        return f"❌ Error toggling category: {str(e)}"
+
+def handle_add_pattern_keywords(category: str, keywords: List[str]) -> str:
+    """Add custom keywords to a pattern category"""
+    if not PATTERN_DETECTION_AVAILABLE:
+        return "❌ Pattern detection is not available"
+    
+    try:
+        success = pattern_engine.add_custom_keywords(category, keywords)
+        
+        if success:
+            result = f"✅ Added {len(keywords)} keyword(s) to '{category}' category:\n"
+            for keyword in keywords:
+                result += f"  - {keyword}\n"
+            result += "\n💡 These keywords will now trigger pattern detection."
+            return result
+        else:
+            return f"❌ Failed to add keywords. Check category name: {category}"
+    
+    except Exception as e:
+        return f"❌ Error adding keywords: {str(e)}"
+
+def handle_remove_pattern_keywords(category: str, keywords: List[str]) -> str:
+    """Remove keywords from a pattern category"""
+    if not PATTERN_DETECTION_AVAILABLE:
+        return "❌ Pattern detection is not available"
+    
+    try:
+        success = pattern_engine.remove_keywords(category, keywords)
+        
+        if success:
+            result = f"✅ Removed keyword(s) from '{category}' category:\n"
+            for keyword in keywords:
+                result += f"  - {keyword}\n"
+            result += "\n💡 These keywords will no longer trigger pattern detection."
+            return result
+        else:
+            return f"❌ Failed to remove keywords. Check category name: {category}"
+    
+    except Exception as e:
+        return f"❌ Error removing keywords: {str(e)}"
+
+def handle_list_pattern_keywords(category: str) -> str:
+    """List all keywords for a pattern category"""
+    if not PATTERN_DETECTION_AVAILABLE:
+        return "❌ Pattern detection is not available"
+    
+    try:
+        keywords = pattern_engine.get_all_keywords(category)
+        
+        if keywords:
+            result = f"## 📋 Keywords for '{category}' category\n\n"
+            result += f"Total keywords: {len(keywords)}\n\n"
+            
+            # Group keywords by length for better readability
+            short_keywords = [k for k in keywords if len(k) <= 10]
+            medium_keywords = [k for k in keywords if 10 < len(k) <= 20]
+            long_keywords = [k for k in keywords if len(k) > 20]
+            
+            if short_keywords:
+                result += "### Short keywords:\n"
+                result += ", ".join(sorted(short_keywords)) + "\n\n"
+            
+            if medium_keywords:
+                result += "### Medium keywords:\n"
+                result += ", ".join(sorted(medium_keywords)) + "\n\n"
+            
+            if long_keywords:
+                result += "### Long keywords:\n"
+                for kw in sorted(long_keywords):
+                    result += f"- {kw}\n"
+            
+            return result
+        else:
+            return f"❌ No keywords found for category '{category}'. Check category name."
+    
+    except Exception as e:
+        return f"❌ Error listing keywords: {str(e)}"
+
+def handle_force_consultation(context: str, category: str, multi_ai: bool = False) -> str:
+    """Force AI consultation regardless of pattern detection"""
+    if not AI_CLIENTS:
+        return "❌ No AI clients are configured"
+    
+    # Add validation for empty context
+    if not context or not context.strip():
+        return "❌ Context cannot be empty. Please provide text or code to analyze."
+    
+    try:
+        # Create a synthetic pattern match for the specified category
+        from pattern_detection import PatternCategory, PatternSeverity, PatternMatch
+        
+        try:
+            pattern_category = PatternCategory(category)
+        except ValueError:
+            return f"❌ Invalid category: {category}. Must be one of: security, uncertainty, algorithm, gotcha, architecture"
+        
+        # Create a high-severity pattern match
+        synthetic_match = PatternMatch(
+            category=pattern_category,
+            severity=PatternSeverity.HIGH,
+            keyword=f"[Forced {category} consultation]",
+            context=context,
+            start_pos=0,
+            end_pos=len(context),
+            confidence=1.0,
+            requires_multi_ai=multi_ai,
+            line_number=1,
+            full_line=context.split('\n')[0] if context else ""
+        )
+        
+        # Use the response manager to handle the consultation
+        if AI_CONSULTATION_AVAILABLE and consultation_manager:
+            # Get consultation strategy
+            strategy = consultation_manager.get_consultation_strategy(
+                [synthetic_match],
+                priority="accuracy"
+            )
+            
+            # Execute consultation
+            consultation_response = consultation_manager.execute_consultation(
+                [synthetic_match],
+                context,
+                strategy
+            )
+        else:
+            # Fallback to original response manager
+            consultation_response = response_manager.handle_patterns([synthetic_match], context)
+        
+        if not consultation_response:
+            return "❌ Unable to generate consultation response"
+        
+        # Format response
+        result = f"""## 🤖 Forced AI Consultation - {category.upper()}
+        
+**Context analyzed**: {len(context)} characters
+**Multi-AI mode**: {'Yes' if multi_ai else 'No'}
+**AIs Consulted**: {', '.join(consultation_response.ai_responses.keys())}
+
+"""
+        
+        result += consultation_response.primary_recommendation
+        
+        if consultation_response.synthesis:
+            result += f"\n\n{consultation_response.synthesis}"
+        
+        return result
+        
+    except Exception as e:
+        return f"❌ Error during forced consultation: {str(e)}"
+
 async def handle_cache_stats() -> str:
     """Get async cache statistics"""
     if not ASYNC_CACHE_AVAILABLE or not (ASYNC_CACHE_AVAILABLE and hasattr(pattern_engine, 'get_performance_stats')):
@@ -1192,6 +1487,35 @@ def handle_tool_call(request_id: Any, params: Dict[str, Any]) -> Dict[str, Any]:
             global_level = arguments.get("global_level")
             category_overrides = arguments.get("category_overrides")
             result = handle_update_sensitivity(global_level, category_overrides)
+        
+        elif tool_name == "toggle_pattern_detection":
+            enabled = arguments.get("enabled", True)
+            result = handle_toggle_pattern_detection(enabled)
+        
+        elif tool_name == "toggle_category":
+            category = arguments.get("category", "")
+            enabled = arguments.get("enabled", True)
+            result = handle_toggle_category(category, enabled)
+        
+        elif tool_name == "add_pattern_keywords":
+            category = arguments.get("category", "")
+            keywords = arguments.get("keywords", [])
+            result = handle_add_pattern_keywords(category, keywords)
+        
+        elif tool_name == "remove_pattern_keywords":
+            category = arguments.get("category", "")
+            keywords = arguments.get("keywords", [])
+            result = handle_remove_pattern_keywords(category, keywords)
+        
+        elif tool_name == "list_pattern_keywords":
+            category = arguments.get("category", "")
+            result = handle_list_pattern_keywords(category)
+        
+        elif tool_name == "force_consultation":
+            context = arguments.get("context", "")
+            category = arguments.get("category", "")
+            multi_ai = arguments.get("multi_ai", False)
+            result = handle_force_consultation(context, category, multi_ai)
         
         # AI Consultation Manager tools
         elif tool_name == "ai_consultation_strategy":

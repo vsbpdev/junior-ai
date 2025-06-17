@@ -199,6 +199,9 @@ class EnhancedPatternDetectionEngine:
         self.sensitivity_settings = self._load_sensitivity_settings(str(self._config_path))
         self._apply_sensitivity_to_context_window()
         
+        # Load pattern detection enabled state and manual overrides
+        self._load_pattern_detection_config(str(self._config_path))
+        
         # Initialize caching
         self._sensitivity_cache = {}
         self._cache_lock = threading.RLock()
@@ -576,6 +579,68 @@ class EnhancedPatternDetectionEngine:
             category_overrides=category_overrides
         )
     
+    def _load_pattern_detection_config(self, config_path: str) -> None:
+        """Load pattern detection configuration including enabled states and manual overrides."""
+        logger = logging.getLogger('pattern_detection')
+        
+        try:
+            if not os.path.exists(config_path):
+                logger.warning(f"Config file not found: {config_path}, using defaults")
+                self._pattern_detection_enabled = True
+                self._category_enabled_states = {cat: True for cat in PatternCategory}
+                self._manual_override_config = {}
+                return
+            
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+            
+            pattern_config = config.get('pattern_detection', {})
+            
+            # Load global enabled state
+            self._pattern_detection_enabled = pattern_config.get('enabled', True)
+            
+            # Load manual override configuration
+            self._manual_override_config = pattern_config.get('manual_override', {})
+            
+            # Load category-specific configurations
+            categories_config = pattern_config.get('pattern_categories', {})
+            self._category_enabled_states = {}
+            
+            for category in PatternCategory:
+                cat_config = categories_config.get(category.value, {})
+                self._category_enabled_states[category] = cat_config.get('enabled', True)
+                
+                # Load custom keywords and patterns
+                custom_keywords = cat_config.get('custom_keywords', [])
+                if custom_keywords and category in self.pattern_definitions:
+                    self.pattern_definitions[category].keywords.extend(custom_keywords)
+                
+                custom_patterns = cat_config.get('custom_patterns', [])
+                if custom_patterns and category in self.pattern_definitions:
+                    self.pattern_definitions[category].regex_patterns.extend(custom_patterns)
+                
+                # Load disabled keywords
+                disabled_keywords = cat_config.get('disabled_keywords', [])
+                if disabled_keywords and category in self.pattern_definitions:
+                    current_keywords = self.pattern_definitions[category].keywords
+                    self.pattern_definitions[category].keywords = [
+                        k for k in current_keywords if k not in disabled_keywords
+                    ]
+            
+            # Recompile patterns with custom additions
+            self.compiled_patterns = self._compile_patterns()
+            
+        except Exception as e:
+            logger.error(f"Error loading pattern detection config: {e}")
+            # Set defaults on error
+            self._pattern_detection_enabled = True
+            self._category_enabled_states = {cat: True for cat in PatternCategory}
+            self._manual_override_config = {}
+    
+    def _is_category_enabled(self, category: PatternCategory) -> bool:
+        """Check if a specific category is enabled."""
+        return self._category_enabled_states.get(category, True)
+    
     def _validate_sensitivity_level(self, level: str) -> None:
         """Validate sensitivity level value"""
         if not isinstance(level, str):
@@ -761,18 +826,25 @@ class EnhancedPatternDetectionEngine:
             >>> matches[0].severity.name
             'CRITICAL'
         """
+        # Check if pattern detection is globally enabled
+        if not self.is_pattern_detection_enabled():
+            return []
+        
         # Validate input
         validated_text = self._validate_and_sanitize_text(text)
         
         matches = []
         lines = validated_text.split('\n')
         
+        # Check if category is enabled before processing
         for category, patterns in self.compiled_patterns.items():
+            if not self._is_category_enabled(category):
+                continue
             definition = self.pattern_definitions[category]
             category_sensitivity = self._get_category_sensitivity(category)
             
             for pattern in patterns:
-                for match in pattern.finditer(text):
+                for match in pattern.finditer(validated_text):
                     start_pos = match.start()
                     end_pos = match.end()
                     
@@ -1311,6 +1383,325 @@ class EnhancedPatternDetectionEngine:
             "category_overrides": self.sensitivity_settings.category_overrides,
             "effective_context_window": self.context_window_size
         }
+    
+    def add_custom_keywords(self, category: str, keywords: List[str]) -> bool:
+        """Add custom keywords to a pattern category.
+        
+        Args:
+            category: Pattern category name (security, uncertainty, etc.)
+            keywords: List of keywords to add
+            
+        Returns:
+            True if keywords were added successfully, False otherwise
+        """
+        logger = logging.getLogger('pattern_detection')
+        
+        try:
+            # Validate category
+            try:
+                pattern_category = PatternCategory(category)
+            except ValueError:
+                logger.error(f"Invalid category: {category}")
+                return False
+            
+            # Validate keywords
+            if not isinstance(keywords, list) or not all(isinstance(k, str) for k in keywords):
+                logger.error("Keywords must be a list of strings")
+                return False
+            
+            # Add keywords to pattern definition
+            if pattern_category in self.pattern_definitions:
+                current_keywords = set(self.pattern_definitions[pattern_category].keywords)
+                new_keywords = [k.lower().strip() for k in keywords if k.strip()]
+                current_keywords.update(new_keywords)
+                self.pattern_definitions[pattern_category].keywords = list(current_keywords)
+                
+                # Recompile patterns
+                self.compiled_patterns = self._compile_patterns()
+                
+                # Update configuration
+                self._update_custom_keywords_config(category, new_keywords, 'add')
+                
+                logger.info(f"Added {len(new_keywords)} keywords to {category}")
+                return True
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"Error adding custom keywords: {e}")
+            return False
+    
+    def remove_keywords(self, category: str, keywords: List[str]) -> bool:
+        """Remove keywords from a pattern category.
+        
+        Args:
+            category: Pattern category name
+            keywords: List of keywords to remove
+            
+        Returns:
+            True if keywords were removed successfully, False otherwise
+        """
+        logger = logging.getLogger('pattern_detection')
+        
+        try:
+            # Validate category
+            try:
+                pattern_category = PatternCategory(category)
+            except ValueError:
+                logger.error(f"Invalid category: {category}")
+                return False
+            
+            # Remove keywords from pattern definition
+            if pattern_category in self.pattern_definitions:
+                current_keywords = set(self.pattern_definitions[pattern_category].keywords)
+                keywords_to_remove = [k.lower().strip() for k in keywords if k.strip()]
+                current_keywords.difference_update(keywords_to_remove)
+                self.pattern_definitions[pattern_category].keywords = list(current_keywords)
+                
+                # Recompile patterns
+                self.compiled_patterns = self._compile_patterns()
+                
+                # Update configuration
+                self._update_custom_keywords_config(category, keywords_to_remove, 'remove')
+                
+                logger.info(f"Removed keywords from {category}")
+                return True
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"Error removing keywords: {e}")
+            return False
+    
+    def add_custom_pattern(self, category: str, pattern: str) -> bool:
+        """Add a custom regex pattern to a category.
+        
+        Args:
+            category: Pattern category name
+            pattern: Regular expression pattern
+            
+        Returns:
+            True if pattern was added successfully, False otherwise
+        """
+        logger = logging.getLogger('pattern_detection')
+        
+        try:
+            # Validate category
+            try:
+                pattern_category = PatternCategory(category)
+            except ValueError:
+                logger.error(f"Invalid category: {category}")
+                return False
+            
+            # Validate regex pattern
+            try:
+                re.compile(pattern)
+            except re.error as e:
+                logger.error(f"Invalid regex pattern: {e}")
+                return False
+            
+            # Add pattern to definition
+            if pattern_category in self.pattern_definitions:
+                self.pattern_definitions[pattern_category].regex_patterns.append(pattern)
+                
+                # Recompile patterns
+                self.compiled_patterns = self._compile_patterns()
+                
+                # Update configuration
+                self._update_custom_patterns_config(category, [pattern], 'add')
+                
+                logger.info(f"Added custom pattern to {category}")
+                return True
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"Error adding custom pattern: {e}")
+            return False
+    
+    def get_all_keywords(self, category: str) -> List[str]:
+        """Get all keywords for a specific category.
+        
+        Args:
+            category: Pattern category name
+            
+        Returns:
+            List of keywords for the category, empty list if category not found
+        """
+        try:
+            pattern_category = PatternCategory(category)
+            if pattern_category in self.pattern_definitions:
+                return self.pattern_definitions[pattern_category].keywords.copy()
+        except ValueError:
+            pass
+        
+        return []
+    
+    def set_pattern_detection_enabled(self, enabled: bool) -> bool:
+        """Enable or disable pattern detection globally.
+        
+        Args:
+            enabled: True to enable, False to disable
+            
+        Returns:
+            True if setting was updated successfully
+        """
+        logger = logging.getLogger('pattern_detection')
+        
+        try:
+            config_path = str(self._config_path)
+            
+            # Load current config
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+            
+            # Update enabled setting
+            if 'pattern_detection' not in config:
+                config['pattern_detection'] = {}
+            
+            config['pattern_detection']['enabled'] = enabled
+            
+            # Save config atomically
+            if self._atomic_config_update(config_path, config):
+                self._pattern_detection_enabled = enabled
+                logger.info(f"Pattern detection {'enabled' if enabled else 'disabled'}")
+                return True
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"Error updating pattern detection enabled: {e}")
+            return False
+    
+    def is_pattern_detection_enabled(self) -> bool:
+        """Check if pattern detection is enabled.
+        
+        Returns:
+            True if enabled, False otherwise
+        """
+        return getattr(self, '_pattern_detection_enabled', True)
+    
+    def set_category_enabled(self, category: str, enabled: bool) -> bool:
+        """Enable or disable a specific pattern category.
+        
+        Args:
+            category: Pattern category name
+            enabled: True to enable, False to disable
+            
+        Returns:
+            True if setting was updated successfully
+        """
+        logger = logging.getLogger('pattern_detection')
+        
+        try:
+            # Validate category
+            try:
+                pattern_category = PatternCategory(category)
+            except ValueError:
+                logger.error(f"Invalid category: {category}")
+                return False
+            
+            config_path = str(self._config_path)
+            
+            # Add locking to prevent race condition
+            with self._cache_lock:  # Reuse existing lock
+                # Load current config
+                with open(config_path, 'r', encoding='utf-8') as f:
+                    config = json.load(f)
+                
+                # Update category enabled setting
+                pattern_config = config.get('pattern_detection', {})
+                categories = pattern_config.get('pattern_categories', {})
+                
+                if category not in categories:
+                    categories[category] = {}
+                
+                categories[category]['enabled'] = enabled
+                pattern_config['pattern_categories'] = categories
+                config['pattern_detection'] = pattern_config
+                
+                # Save config atomically
+                if self._atomic_config_update(config_path, config):
+                    # Update in-memory state
+                    self._category_enabled_states[pattern_category] = enabled
+                    logger.info(f"Category {category} {'enabled' if enabled else 'disabled'}")
+                    return True
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"Error updating category enabled: {e}")
+            return False
+    
+    def _update_custom_keywords_config(self, category: str, keywords: List[str], action: str) -> None:
+        """Update custom keywords in configuration file."""
+        try:
+            config_path = str(self._config_path)
+            
+            # Load current config
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+            
+            # Navigate to pattern categories
+            pattern_config = config.get('pattern_detection', {})
+            categories = pattern_config.get('pattern_categories', {})
+            
+            if category not in categories:
+                categories[category] = {}
+            
+            # Update custom keywords
+            custom_keywords = set(categories[category].get('custom_keywords', []))
+            
+            if action == 'add':
+                custom_keywords.update(keywords)
+            elif action == 'remove':
+                custom_keywords.difference_update(keywords)
+            
+            categories[category]['custom_keywords'] = list(custom_keywords)
+            pattern_config['pattern_categories'] = categories
+            config['pattern_detection'] = pattern_config
+            
+            # Save config atomically
+            self._atomic_config_update(config_path, config)
+            
+        except Exception as e:
+            logger = logging.getLogger('pattern_detection')
+            logger.error(f"Error updating custom keywords config: {e}")
+    
+    def _update_custom_patterns_config(self, category: str, patterns: List[str], action: str) -> None:
+        """Update custom patterns in configuration file."""
+        try:
+            config_path = str(self._config_path)
+            
+            # Load current config
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+            
+            # Navigate to pattern categories
+            pattern_config = config.get('pattern_detection', {})
+            categories = pattern_config.get('pattern_categories', {})
+            
+            if category not in categories:
+                categories[category] = {}
+            
+            # Update custom patterns
+            custom_patterns = categories[category].get('custom_patterns', [])
+            
+            if action == 'add':
+                custom_patterns.extend(patterns)
+            elif action == 'remove':
+                custom_patterns = [p for p in custom_patterns if p not in patterns]
+            
+            categories[category]['custom_patterns'] = custom_patterns
+            pattern_config['pattern_categories'] = categories
+            config['pattern_detection'] = pattern_config
+            
+            # Save config atomically
+            self._atomic_config_update(config_path, config)
+            
+        except Exception as e:
+            logger = logging.getLogger('pattern_detection')
+            logger.error(f"Error updating custom patterns config: {e}")
 
 
 if __name__ == "__main__":
