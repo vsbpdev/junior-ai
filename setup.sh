@@ -53,7 +53,15 @@ fi
 # Install Python dependencies
 echo ""
 echo "📦 Installing Python dependencies..."
+echo "   Installing production dependencies..."
 pip3 install -r "$SCRIPT_DIR/requirements.txt" --quiet
+
+# Check if development mode
+if [ "$1" = "--dev" ]; then
+    echo "   Installing development dependencies..."
+    pip3 install -r "$SCRIPT_DIR/requirements-dev.txt" --quiet
+    echo -e "${GREEN}✅ Development dependencies installed${NC}"
+fi
 
 # Function to prompt for API key and model
 prompt_for_ai() {

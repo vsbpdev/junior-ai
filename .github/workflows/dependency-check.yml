@@ -1,0 +1,46 @@
+name: Dependency Security Check
+
+on:
+  push:
+    paths:
+      - 'requirements.txt'
+      - 'requirements-dev.txt'
+  pull_request:
+    paths:
+      - 'requirements.txt'
+      - 'requirements-dev.txt'
+  schedule:
+    - cron: '0 0 * * 1'  # Weekly on Monday
+
+jobs:
+  security-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install safety bandit
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+      
+      - name: Run Safety check
+        run: safety check --json
+        continue-on-error: true
+      
+      - name: Run Bandit security linter
+        run: bandit -r . -f json -o bandit-report.json
+        continue-on-error: true
+      
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
