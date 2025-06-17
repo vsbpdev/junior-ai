@@ -54,12 +54,12 @@ fi
 echo ""
 echo "📦 Installing Python dependencies..."
 echo "   Installing production dependencies..."
-pip3 install -r "$SCRIPT_DIR/requirements.txt" --quiet
+pip3 install -r "$SCRIPT_DIR/requirements.txt"
 
 # Check if development mode
 if [ "$1" = "--dev" ]; then
     echo "   Installing development dependencies..."
-    pip3 install -r "$SCRIPT_DIR/requirements-dev.txt" --quiet
+    pip3 install -r "$SCRIPT_DIR/requirements-dev.txt"
     echo -e "${GREEN}✅ Development dependencies installed${NC}"
 fi
 
