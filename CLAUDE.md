@@ -37,11 +37,14 @@ claude mcp add --scope user junior-ai python3 ~/.claude-mcp-servers/junior-ai/se
 
 ### Testing and Development
 ```bash
-# Run pattern detection tests
-python3 test_pattern_detection.py
+# Run async pattern cache tests
+python3 test_async_pattern_cache.py
 
-# Run integration tests  
-python3 test_integration.py
+# Run context-aware matching tests
+python3 test_context_aware_matching.py
+
+# Run response synthesis tests
+python3 test_response_synthesis.py
 
 # Check MCP server status
 claude mcp list
@@ -51,6 +54,10 @@ mcp__junior-ai__server_status
 
 # Run server manually for debugging
 python3 ~/.claude-mcp-servers/junior-ai/server.py
+
+# Run demo scripts
+python3 examples/ai_consultation_demo.py
+python3 examples/context_aware_demo.py
 ```
 
 ## Architecture
@@ -93,12 +100,32 @@ This codebase implements an MCP (Model Context Protocol) server with intelligent
      - Governance and compliance reporting
      - Performance optimization (cost vs. speed vs. accuracy)
 
-4. **Configuration System**
+4. **Response Synthesis System** (NEW)
+   - **response_synthesis.py**: Intelligently combines multiple AI responses
+     - Multiple synthesis strategies: consensus, debate, expert-weighted, comprehensive, summary, hierarchical
+     - Confidence scoring and agreement/disagreement analysis
+     - Key insight extraction and prioritization
+     - Markdown formatting with proper structure
+   - **docs/response_synthesis.md**: Detailed documentation
+
+5. **Async Caching System** (NEW)
+   - **async_pattern_cache.py**: High-performance async caching with deduplication
+     - LRU cache with configurable TTL and size limits
+     - Request deduplication for concurrent identical requests
+     - Dynamic TTL based on pattern types and severity
+     - Memory-efficient storage with automatic cleanup
+   - **async_cached_pattern_engine.py**: Integrates caching with pattern detection
+     - Transparent caching layer for pattern detection
+     - Performance metrics and cache hit/miss tracking
+     - Configurable cache strategies per pattern type
+
+6. **Configuration System**
    - **credentials.json**: Runtime configuration (created from template)
      - API keys and model selections
-     - Pattern detection settings
-     - Cache configuration
+     - Pattern detection settings with sensitivity levels (low, medium, high, maximum)
+     - Async cache configuration (size, TTL, deduplication settings)
      - AI consultation preferences
+     - Pattern category customization and overrides
    - **credentials.template.json**: Template with default configuration
 
 ### AI Integration Architecture
@@ -160,8 +187,10 @@ Each AI exposes 6 specialized tools:
 1. **Asynchronous Processing**: Pattern detection runs in background threads to avoid blocking
 2. **Graceful Degradation**: Server works with any subset of configured AIs
 3. **Context-Aware Detection**: Enhanced context extraction for better AI consultations
-4. **Caching Strategy**: LRU cache with configurable TTL for performance
+4. **Caching Strategy**: Dual-layer caching with async pattern cache and request deduplication
 5. **Multi-AI Triggering**: Critical patterns automatically trigger multiple AI consultations
+6. **Response Synthesis**: Intelligent combination of multiple AI responses for comprehensive insights
+7. **Performance Optimization**: Batch processing and concurrent AI consultations
 
 ### Error Handling Strategy
 
@@ -169,3 +198,26 @@ Each AI exposes 6 specialized tools:
 - Pattern detection failures fall back to direct AI consultation
 - JSON-RPC errors are properly formatted for Claude Code
 - Comprehensive logging for debugging (to stderr)
+- Async operations with proper error propagation
+
+### Demo Scripts
+
+The `examples/` directory contains demonstration scripts:
+- **ai_consultation_demo.py**: Shows AI consultation manager features
+- **context_aware_demo.py**: Demonstrates context-aware pattern matching
+
+### Pattern Detection Sensitivity
+
+The system supports configurable sensitivity levels:
+- **low**: Conservative detection - only obvious patterns (confidence threshold: 0.9)
+- **medium**: Balanced detection - standard sensitivity (confidence threshold: 0.7)
+- **high**: Aggressive detection - catch potential issues (confidence threshold: 0.5)
+- **maximum**: Maximum detection - catch everything possible (confidence threshold: 0.3)
+
+Each level affects:
+- Confidence thresholds for pattern matching
+- Context extraction size
+- Minimum matches required for consultation
+- Severity threshold for triggering consultations
+
+Category-specific overrides can be set (e.g., always use "high" for security patterns)
