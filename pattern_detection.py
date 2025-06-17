@@ -613,11 +613,17 @@ class EnhancedPatternDetectionEngine:
                 # Load custom keywords and patterns
                 custom_keywords = cat_config.get('custom_keywords', [])
                 if custom_keywords and category in self.pattern_definitions:
-                    self.pattern_definitions[category].keywords.extend(custom_keywords)
+                    # Deduplicate keywords to prevent memory waste
+                    existing_keywords = set(self.pattern_definitions[category].keywords)
+                    new_keywords = [k for k in custom_keywords if k not in existing_keywords]
+                    self.pattern_definitions[category].keywords.extend(new_keywords)
                 
                 custom_patterns = cat_config.get('custom_patterns', [])
                 if custom_patterns and category in self.pattern_definitions:
-                    self.pattern_definitions[category].regex_patterns.extend(custom_patterns)
+                    # Deduplicate patterns as well
+                    existing_patterns = set(self.pattern_definitions[category].regex_patterns)
+                    new_patterns = [p for p in custom_patterns if p not in existing_patterns]
+                    self.pattern_definitions[category].regex_patterns.extend(new_patterns)
                 
                 # Load disabled keywords
                 disabled_keywords = cat_config.get('disabled_keywords', [])
@@ -1411,16 +1417,17 @@ class EnhancedPatternDetectionEngine:
             
             # Add keywords to pattern definition
             if pattern_category in self.pattern_definitions:
-                current_keywords = set(self.pattern_definitions[pattern_category].keywords)
-                new_keywords = [k.lower().strip() for k in keywords if k.strip()]
-                current_keywords.update(new_keywords)
-                self.pattern_definitions[pattern_category].keywords = list(current_keywords)
-                
-                # Recompile patterns
-                self.compiled_patterns = self._compile_patterns()
-                
-                # Update configuration
-                self._update_custom_keywords_config(category, new_keywords, 'add')
+                with self._cache_lock:  # Thread safety for shared state modification
+                    current_keywords = set(self.pattern_definitions[pattern_category].keywords)
+                    new_keywords = [k.lower().strip() for k in keywords if k.strip()]
+                    current_keywords.update(new_keywords)
+                    self.pattern_definitions[pattern_category].keywords = list(current_keywords)
+                    
+                    # Recompile patterns
+                    self.compiled_patterns = self._compile_patterns()
+                    
+                    # Update configuration
+                    self._update_custom_keywords_config(category, new_keywords, 'add')
                 
                 logger.info(f"Added {len(new_keywords)} keywords to {category}")
                 return True
@@ -1453,16 +1460,17 @@ class EnhancedPatternDetectionEngine:
             
             # Remove keywords from pattern definition
             if pattern_category in self.pattern_definitions:
-                current_keywords = set(self.pattern_definitions[pattern_category].keywords)
-                keywords_to_remove = [k.lower().strip() for k in keywords if k.strip()]
-                current_keywords.difference_update(keywords_to_remove)
-                self.pattern_definitions[pattern_category].keywords = list(current_keywords)
-                
-                # Recompile patterns
-                self.compiled_patterns = self._compile_patterns()
-                
-                # Update configuration
-                self._update_custom_keywords_config(category, keywords_to_remove, 'remove')
+                with self._cache_lock:  # Thread safety for shared state modification
+                    current_keywords = set(self.pattern_definitions[pattern_category].keywords)
+                    keywords_to_remove = [k.lower().strip() for k in keywords if k.strip()]
+                    current_keywords.difference_update(keywords_to_remove)
+                    self.pattern_definitions[pattern_category].keywords = list(current_keywords)
+                    
+                    # Recompile patterns
+                    self.compiled_patterns = self._compile_patterns()
+                    
+                    # Update configuration
+                    self._update_custom_keywords_config(category, keywords_to_remove, 'remove')
                 
                 logger.info(f"Removed keywords from {category}")
                 return True
@@ -1502,16 +1510,22 @@ class EnhancedPatternDetectionEngine:
             
             # Add pattern to definition
             if pattern_category in self.pattern_definitions:
-                self.pattern_definitions[pattern_category].regex_patterns.append(pattern)
-                
-                # Recompile patterns
-                self.compiled_patterns = self._compile_patterns()
-                
-                # Update configuration
-                self._update_custom_patterns_config(category, [pattern], 'add')
-                
-                logger.info(f"Added custom pattern to {category}")
-                return True
+                with self._cache_lock:  # Thread safety for shared state modification
+                    # Check for duplicates
+                    if pattern not in self.pattern_definitions[pattern_category].regex_patterns:
+                        self.pattern_definitions[pattern_category].regex_patterns.append(pattern)
+                        
+                        # Recompile patterns
+                        self.compiled_patterns = self._compile_patterns()
+                        
+                        # Update configuration
+                        self._update_custom_patterns_config(category, [pattern], 'add')
+                        
+                        logger.info(f"Added custom pattern to {category}")
+                        return True
+                    else:
+                        logger.info(f"Pattern already exists in {category}")
+                        return True
             
             return False
             

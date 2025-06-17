@@ -1234,15 +1234,15 @@ def handle_force_consultation(context: str, category: str, multi_ai: bool = Fals
         )
         
         # Use the response manager to handle the consultation
-        if AI_CONSULTATION_AVAILABLE and consultation_manager:
+        if AI_CONSULTATION_AVAILABLE and ai_consultation_manager:
             # Get consultation strategy
-            strategy = consultation_manager.get_consultation_strategy(
+            strategy = ai_consultation_manager.get_consultation_strategy(
                 [synthetic_match],
                 priority="accuracy"
             )
             
             # Execute consultation
-            consultation_response = consultation_manager.execute_consultation(
+            consultation_response = ai_consultation_manager.execute_consultation(
                 [synthetic_match],
                 context,
                 strategy

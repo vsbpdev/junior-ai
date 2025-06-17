@@ -7,8 +7,7 @@ Tests pattern detection enable/disable, category controls, and keyword managemen
 import json
 import os
 import tempfile
-import shutil
-from pattern_detection import EnhancedPatternDetectionEngine, PatternCategory
+from pattern_detection import EnhancedPatternDetectionEngine
 import logging
 
 # Set up logging
@@ -103,10 +102,11 @@ def create_test_config():
         }
     }
     
-    # Create temporary config file in current directory
-    test_config_path = "test_manual_override_config.json"
-    with open(test_config_path, 'w') as f:
-        json.dump(config, f, indent=2)
+    # Create temporary config file with proper temp file handling
+    temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=".json")
+    test_config_path = temp_file.name
+    json.dump(config, temp_file)
+    temp_file.close()
     return test_config_path
 
 def test_global_enable_disable(engine):
@@ -206,7 +206,7 @@ def test_custom_keywords(engine):
     matches = engine.detect_patterns(test_text)
     security_matches = [m for m in matches if m.category.value == "security"]
     
-    print(f"2. Testing detection with custom keywords:")
+    print("2. Testing detection with custom keywords:")
     print(f"   Found {len(security_matches)} security patterns")
     for match in security_matches:
         print(f"   - Keyword: {match.keyword}")
@@ -253,7 +253,7 @@ def test_custom_patterns(engine):
     test_text = "Current version: v2.3.1 // TODO: update to v3.0.0"
     matches = engine.detect_patterns(test_text)
     
-    print(f"2. Testing detection with custom pattern:")
+    print("2. Testing detection with custom pattern:")
     print(f"   Found {len(matches)} total patterns")
     for match in matches:
         print(f"   - {match.category.value}: {match.keyword}")

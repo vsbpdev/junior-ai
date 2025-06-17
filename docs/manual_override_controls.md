@@ -167,7 +167,7 @@ mcp__junior-ai__add_pattern_keywords category="security" keywords='["apiSecret",
 ```
 
 ### 3. Temporary Disable
-Disable pattern detection during bulk operations:
+Pattern detection during bulk operations:
 
 ```bash
 # Disable globally
