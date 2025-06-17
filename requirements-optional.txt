@@ -1,0 +1,7 @@
+# Optional dependencies for enhanced security features
+
+# Note: keyring has been moved to main requirements.txt for better user experience
+
+# Additional keyring backends (optional)
+# keyrings.alt>=5.0.0,<6.0.0  # Alternative keyring implementations
+# python-keyring-lib>=0.2.0    # Additional keyring utilities

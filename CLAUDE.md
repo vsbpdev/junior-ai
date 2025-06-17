@@ -46,6 +46,9 @@ python3 test_context_aware_matching.py
 # Run response synthesis tests
 python3 test_response_synthesis.py
 
+# Run manual override tests
+python3 test_manual_override.py
+
 # Check MCP server status
 claude mcp list
 

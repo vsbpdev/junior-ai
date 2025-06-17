@@ -247,15 +247,47 @@ The server automatically adapts to your available AIs. Tools for unavailable AIs
 - Add **DeepSeek** for specialized reasoning tasks
 - Use **OpenRouter** for flexible model access and cost optimization
 
-## 🔒 Security Notes
+## 🔒 Security & Credential Storage
 
-- **API keys stored locally**: All credentials are in `~/.claude-mcp-servers/junior-ai/credentials.json`
-- **Never committed to git**: The `.gitignore` file excludes all credential files
-- **Optional AIs**: Only AIs with valid keys are loaded
-- **Graceful failures**: Failed AI connections don't break the server
-- **Input validation**: All requests are validated before processing
+Junior AI now supports **secure credential storage** with multiple options:
 
-⚠️ **Important**: Never share your `credentials.json` file or commit it to version control!
+### Quick Secure Setup
+```bash
+./setup.sh --secure  # Recommended: Uses secure storage instead of plain text
+```
+
+### Storage Options (in order of security)
+1. **🔐 OS Keyring** - Most secure, uses your system's credential manager
+2. **🔑 Environment Variables** - Great for Docker/cloud deployments  
+3. **🔒 Encrypted File** - Portable encrypted storage
+4. **⚠️ Plain JSON** - Legacy support only (not recommended)
+
+### Migrating Existing Credentials
+If you already have a `credentials.json`:
+```bash
+# Check your current security level
+python3 migrate_credentials.py --check-only
+
+# Migrate to secure storage (recommended)
+python3 migrate_credentials.py --target env
+```
+
+### Security Best Practices
+- **Never commit credentials**: The `.gitignore` excludes all credential files
+- **Use environment variables** for production deployments
+- **Rotate API keys** regularly
+- **Enable only needed AIs**: Reduces attack surface
+- **Monitor API usage**: Check your provider dashboards
+
+### Environment Variable Setup
+Create a `.env` file (see `.env.example`):
+```bash
+JUNIOR_AI_GEMINI_API_KEY=your-key-here
+JUNIOR_AI_GEMINI_ENABLED=true
+JUNIOR_AI_PATTERN_ENABLED=true
+```
+
+For detailed security documentation, see [Secure Credentials Guide](docs/secure-credentials.md).
 
 ## 🐛 Troubleshooting
 
@@ -286,9 +318,12 @@ claude mcp remove junior-ai
 
 ```text
 ~/.claude-mcp-servers/junior-ai/
-├── server.py           # Main MCP server
-├── credentials.json    # API keys and configuration
-└── requirements.txt    # Python dependencies
+├── server.py               # Main MCP server
+├── secure_credentials.py   # Secure credential manager
+├── credentials.json        # Legacy API keys (migrate to secure storage)
+├── .env                    # Environment variables (recommended)
+├── migrate_credentials.py  # Migration tool
+└── requirements.txt        # Python dependencies
 ```
 
 ## 🚀 Advanced Usage

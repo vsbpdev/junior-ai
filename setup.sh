@@ -14,6 +14,21 @@ echo -e "${BLUE}🚀 Junior AI Assistant Setup${NC}"
 echo "Connect Claude Code with multiple AI assistants for intelligent pattern detection!"
 echo ""
 
+# Get script directory (needed early for --secure check)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Check for --secure flag
+if [ "$1" = "--secure" ] || [ "$2" = "--secure" ]; then
+    echo -e "${GREEN}🔒 Running secure setup...${NC}"
+    exec "$SCRIPT_DIR/setup_secure.sh" "$@"
+    exit 0
+fi
+
+# Warn about plain text storage
+echo -e "${YELLOW}⚠️  Warning: This setup stores API keys in plain text.${NC}"
+echo -e "${YELLOW}   For secure storage, run: ./setup.sh --secure${NC}"
+echo ""
+
 # Check Python version
 echo "📋 Checking requirements..."
 if ! command -v python3 &> /dev/null; then
@@ -37,8 +52,7 @@ echo ""
 echo "📁 Creating MCP server directory..."
 mkdir -p ~/.claude-mcp-servers/junior-ai
 
-# Get script directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Script directory already defined above for --secure check
 
 # Copy server files
 echo "📋 Installing server..."
@@ -91,17 +105,29 @@ prompt_for_ai() {
                 model_choice="$default_model"
             fi
             
-            # Update credentials.json with new key and model
-            python3 -c "
+            # Update credentials.json with new key and model (using heredoc for security)
+            python3 << EOF
 import json
-with open('$HOME/.claude-mcp-servers/junior-ai/credentials.json', 'r') as f:
+import os
+
+# Safely get the values
+service_name = """$service_name""".lower()
+api_key = """$new_key"""
+model = """$model_choice"""
+creds_path = os.path.expanduser('~/.claude-mcp-servers/junior-ai/credentials.json')
+
+# Load and update credentials
+with open(creds_path, 'r') as f:
     creds = json.load(f)
-creds['$(echo $service_name | tr '[:upper:]' '[:lower:]')']['api_key'] = '$new_key'
-creds['$(echo $service_name | tr '[:upper:]' '[:lower:]')']['model'] = '$model_choice'
-creds['$(echo $service_name | tr '[:upper:]' '[:lower:]')']['enabled'] = True
-with open('$HOME/.claude-mcp-servers/junior-ai/credentials.json', 'w') as f:
+    
+creds[service_name]['api_key'] = api_key
+creds[service_name]['model'] = model
+creds[service_name]['enabled'] = True
+
+# Save updated credentials
+with open(creds_path, 'w') as f:
     json.dump(creds, f, indent=2)
-"
+EOF
             echo -e "${GREEN}✅ $service_name configured with model: $model_choice${NC}"
             return 0
         else
