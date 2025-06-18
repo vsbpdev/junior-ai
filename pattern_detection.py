@@ -17,8 +17,7 @@ import tempfile
 import shutil
 import threading
 
-# Import secure credential manager
-from secure_credentials import SecureCredentialManager
+# SecureCredentialManager imported lazily in _get_credential_manager() method
 
 
 # Custom Exceptions
@@ -188,6 +187,26 @@ class EnhancedPatternDetectionEngine:
         Configuration file access is synchronized to prevent corruption.
     """
     
+    # Class-level cache for SecureCredentialManager (shared across all instances)
+    _shared_credential_manager = None
+    _shared_credential_lock = threading.RLock()
+    
+    @classmethod
+    def _get_credential_manager(cls):
+        """Get or create the shared SecureCredentialManager instance.
+        
+        This method ensures that only one instance of SecureCredentialManager
+        is created and shared across all PatternDetectionEngine instances.
+        
+        Returns:
+            SecureCredentialManager: The shared credential manager instance
+        """
+        with cls._shared_credential_lock:
+            if cls._shared_credential_manager is None:
+                from secure_credentials import SecureCredentialManager
+                cls._shared_credential_manager = SecureCredentialManager()
+            return cls._shared_credential_manager
+    
     def __init__(self, context_window_size: int = 150, config_path: str = "credentials.json") -> None:
         # Validate inputs
         self._validate_init_parameters(context_window_size, config_path)
@@ -199,16 +218,17 @@ class EnhancedPatternDetectionEngine:
         self.pattern_definitions = self._initialize_patterns()
         self.compiled_patterns = self._compile_patterns()
         self.context_window_size = context_window_size
+        
+        # Initialize caching - MUST be before config loading
+        self._sensitivity_cache = {}
+        self._cache_lock = threading.RLock()
+        
+        # Load sensitivity settings
         self.sensitivity_settings = self._load_sensitivity_settings(str(self._config_path))
         self._apply_sensitivity_to_context_window()
         
         # Load pattern detection enabled state and manual overrides
         self._load_pattern_detection_config(str(self._config_path))
-        
-        # Initialize caching
-        self._sensitivity_cache = {}
-        self._credential_manager = None  # Cache for SecureCredentialManager
-        self._cache_lock = threading.RLock()
         
         # Set up logging
         self._setup_logging()
@@ -490,8 +510,8 @@ class EnhancedPatternDetectionEngine:
         logger = logging.getLogger('pattern_detection')
         
         try:
-            # First try secure credential manager
-            credential_manager = SecureCredentialManager()
+            # First try secure credential manager (use shared instance)
+            credential_manager = self._get_credential_manager()
             config = credential_manager.load_credentials()
             
             # Fallback to file if no secure credentials
@@ -547,6 +567,11 @@ class EnhancedPatternDetectionEngine:
         if not isinstance(levels, dict):
             raise ConfigurationError("levels must be an object")
         
+        # If levels is empty, provide defaults
+        if not levels:
+            logger.warning("No sensitivity levels defined in configuration, using defaults")
+            levels = self._get_default_sensitivity_levels()
+        
         if global_level not in levels:
             raise ConfigurationError(f"Global level '{global_level}' not found in levels configuration")
         
@@ -594,10 +619,9 @@ class EnhancedPatternDetectionEngine:
         logger = logging.getLogger('pattern_detection')
         
         try:
-            # First try secure credential manager (cache instance to avoid recreation)
-            if self._credential_manager is None:
-                self._credential_manager = SecureCredentialManager()
-            config = self._credential_manager.load_credentials()
+            # First try secure credential manager (use shared instance)
+            credential_manager = self._get_credential_manager()
+            config = credential_manager.load_credentials()
             
             # Fallback to file if no secure credentials
             if not config:
@@ -672,6 +696,35 @@ class EnhancedPatternDetectionEngine:
         valid_levels = {"low", "medium", "high", "maximum"}
         if level not in valid_levels:
             raise ValidationError(f"Invalid sensitivity level '{level}'. Must be one of: {valid_levels}")
+    
+    def _get_default_sensitivity_levels(self) -> Dict[str, Dict[str, Any]]:
+        """Get default sensitivity level definitions when none are provided in configuration."""
+        return {
+            "low": {
+                "confidence_threshold": 0.9,
+                "context_multiplier": 0.8,
+                "min_matches_for_consultation": 3,
+                "severity_threshold": "high"
+            },
+            "medium": {
+                "confidence_threshold": 0.7,
+                "context_multiplier": 1.0,
+                "min_matches_for_consultation": 2,
+                "severity_threshold": "medium"
+            },
+            "high": {
+                "confidence_threshold": 0.5,
+                "context_multiplier": 1.2,
+                "min_matches_for_consultation": 1,
+                "severity_threshold": "low"
+            },
+            "maximum": {
+                "confidence_threshold": 0.3,
+                "context_multiplier": 1.5,
+                "min_matches_for_consultation": 1,
+                "severity_threshold": "low"
+            }
+        }
     
     def _validate_severity_threshold(self, threshold: str) -> None:
         """Validate severity threshold value"""

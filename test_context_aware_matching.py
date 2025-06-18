@@ -4,11 +4,56 @@ Test cases for context-aware pattern matching
 """
 
 import unittest
+import tempfile
+import json
+import os
+from pathlib import Path
+from unittest.mock import patch
+
 from context_aware_matching import (
     ContextAwarePatternMatcher, CodeLanguage, LanguageDetector,
     PythonContextAnalyzer, ContextualPattern
 )
 from pattern_detection import PatternCategory, PatternSeverity
+
+
+def get_test_config():
+    """Get a complete test configuration for pattern detection."""
+    return {
+        "pattern_detection": {
+            "enabled": True,
+            "sensitivity": {
+                "global_level": "medium",
+                "levels": {
+                    "low": {
+                        "confidence_threshold": 0.9,
+                        "context_multiplier": 0.8,
+                        "min_matches_for_consultation": 3,
+                        "severity_threshold": "high"
+                    },
+                    "medium": {
+                        "confidence_threshold": 0.7,
+                        "context_multiplier": 1.0,
+                        "min_matches_for_consultation": 2,
+                        "severity_threshold": "medium"
+                    },
+                    "high": {
+                        "confidence_threshold": 0.5,
+                        "context_multiplier": 1.2,
+                        "min_matches_for_consultation": 1,
+                        "severity_threshold": "low"
+                    },
+                    "maximum": {
+                        "confidence_threshold": 0.3,
+                        "context_multiplier": 1.5,
+                        "min_matches_for_consultation": 1,
+                        "severity_threshold": "low"
+                    }
+                },
+                "category_overrides": {}
+            }
+        }
+    }
 
 
 class TestLanguageDetection(unittest.TestCase):
@@ -165,7 +210,29 @@ class TestContextAwareMatching(unittest.TestCase):
     """Test the complete context-aware pattern matching"""
     
     def setUp(self):
-        self.matcher = ContextAwarePatternMatcher()
+        # Initialize filename to None for proper cleanup
+        self.config_filename = None
+        try:
+            # Create a temporary config file in current directory
+            self.config_filename = 'test_context_aware_config.json'
+            with open(self.config_filename, 'w') as f:
+                json.dump(get_test_config(), f)
+            
+            # Create pattern detection engine with test config
+            from pattern_detection import EnhancedPatternDetectionEngine
+            base_engine = EnhancedPatternDetectionEngine(config_path=self.config_filename)
+            
+            # Create matcher with the configured engine
+            self.matcher = ContextAwarePatternMatcher(base_engine=base_engine)
+        except Exception:
+            # Clean up config file if setup fails
+            if self.config_filename and os.path.exists(self.config_filename):
+                os.unlink(self.config_filename)
+            raise
+    
+    def tearDown(self):
+        if os.path.exists(self.config_filename):
+            os.unlink(self.config_filename)
     
     def test_security_pattern_in_test_code(self):
         """Test that security patterns in test code are handled differently"""
@@ -336,7 +403,29 @@ class TestContextualFiltering(unittest.TestCase):
     """Test contextual filtering rules"""
     
     def setUp(self):
-        self.matcher = ContextAwarePatternMatcher()
+        # Initialize filename to None for proper cleanup
+        self.config_filename = None
+        try:
+            # Create a temporary config file in current directory
+            self.config_filename = 'test_context_aware_config.json'
+            with open(self.config_filename, 'w') as f:
+                json.dump(get_test_config(), f)
+            
+            # Create pattern detection engine with test config
+            from pattern_detection import EnhancedPatternDetectionEngine
+            base_engine = EnhancedPatternDetectionEngine(config_path=self.config_filename)
+            
+            # Create matcher with the configured engine
+            self.matcher = ContextAwarePatternMatcher(base_engine=base_engine)
+        except Exception:
+            # Clean up config file if setup fails
+            if self.config_filename and os.path.exists(self.config_filename):
+                os.unlink(self.config_filename)
+            raise
+    
+    def tearDown(self):
+        if os.path.exists(self.config_filename):
+            os.unlink(self.config_filename)
     
     def test_decorator_context_reduces_confidence(self):
         """Test that security keywords in decorators have reduced confidence"""

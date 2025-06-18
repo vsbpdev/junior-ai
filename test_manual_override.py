@@ -16,6 +16,9 @@ logger = logging.getLogger(__name__)
 
 def create_test_config():
     """Create a temporary test configuration file in current directory"""
+    # Use a fixed filename in current directory to avoid security path validation issues
+    config_filename = "test_manual_override_config.json"
+    
     config = {
         "pattern_detection": {
             "enabled": True,
@@ -102,12 +105,11 @@ def create_test_config():
         }
     }
     
-    # Create temporary config file with proper temp file handling
-    temp_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix=".json")
-    test_config_path = temp_file.name
-    json.dump(config, temp_file)
-    temp_file.close()
-    return test_config_path
+    # Write config to current directory
+    with open(config_filename, 'w') as f:
+        json.dump(config, f)
+    
+    return config_filename
 
 def test_global_enable_disable(engine):
     """Test global pattern detection enable/disable"""

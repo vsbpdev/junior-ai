@@ -121,7 +121,8 @@ class EnvironmentProvider(CredentialProvider):
                 credentials["pattern_detection"] = {
                     "enabled": True,
                     "sensitivity": {
-                        "global_level": os.environ.get(f"{self.prefix}PATTERN_SENSITIVITY", "medium")
+                        "global_level": os.environ.get(f"{self.prefix}PATTERN_SENSITIVITY", "medium"),
+                        "levels": self._get_default_sensitivity_levels()
                     }
                 }
         
@@ -167,6 +168,35 @@ class EnvironmentProvider(CredentialProvider):
             "openrouter": "openai/gpt-4o"
         }
         return defaults.get(ai_name, "")
+    
+    def _get_default_sensitivity_levels(self) -> Dict[str, Any]:
+        """Get default sensitivity level definitions."""
+        return {
+            "low": {
+                "confidence_threshold": 0.9,
+                "context_multiplier": 0.8,
+                "min_matches_for_consultation": 3,
+                "severity_threshold": "high"
+            },
+            "medium": {
+                "confidence_threshold": 0.7,
+                "context_multiplier": 1.0,
+                "min_matches_for_consultation": 2,
+                "severity_threshold": "medium"
+            },
+            "high": {
+                "confidence_threshold": 0.5,
+                "context_multiplier": 1.2,
+                "min_matches_for_consultation": 1,
+                "severity_threshold": "low"
+            },
+            "maximum": {
+                "confidence_threshold": 0.3,
+                "context_multiplier": 1.5,
+                "min_matches_for_consultation": 1,
+                "severity_threshold": "low"
+            }
+        }
 
 
 class KeyringProvider(CredentialProvider):
