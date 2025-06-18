@@ -3,6 +3,10 @@
 
 set -e
 
+# Initialize variables to prevent unbound references
+NEW_STORAGE_CHOICE=""
+STORAGE_CHOICE=""
+
 # Colors for output
 GREEN='\033[0;32m'
 RED='\033[0;31m'

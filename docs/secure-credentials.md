@@ -164,7 +164,7 @@ JUNIOR_AI_PATTERN_SENSITIVITY=medium  # low, medium, high, maximum
 
 ### 1. Never Commit Secrets
 Add to `.gitignore`:
-```
+```gitignore
 .env
 .env.local
 credentials.json

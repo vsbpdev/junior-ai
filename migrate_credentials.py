@@ -18,6 +18,9 @@ from secure_credentials import (
     check_credential_security
 )
 
+# Define supported AI providers
+SUPPORTED_AI_PROVIDERS = ["gemini", "grok", "openai", "deepseek", "openrouter"]
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -48,7 +51,7 @@ def generate_env_template(credentials: dict) -> str:
     lines = ["# Junior AI Assistant Environment Variables", ""]
     
     # Process AI credentials
-    for ai_name in ["gemini", "grok", "openai", "deepseek", "openrouter"]:
+    for ai_name in SUPPORTED_AI_PROVIDERS:
         if ai_name in credentials:
             ai_config = credentials[ai_name]
             upper_name = ai_name.upper()

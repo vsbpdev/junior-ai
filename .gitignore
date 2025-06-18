@@ -27,7 +27,6 @@ config.ini
 # API keys and secrets
 *.key
 *.pem
-.env
 .env.*
 secrets.json
 

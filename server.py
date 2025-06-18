@@ -52,20 +52,20 @@ try:
     # Log security status (only to stderr for debugging)
     security_status = check_credential_security()
     if security_status.get("security_level") == "low" and security_status.get("plain_json_exists"):
-        print(f"Warning: Using plain JSON credentials. Consider migrating to secure storage. "
-              f"Run 'python3 migrate_credentials.py' to upgrade.", file=sys.stderr)
+        print("Warning: Using plain JSON credentials. Consider migrating to secure storage. "
+              "Run 'python3 migrate_credentials.py' to upgrade.", file=sys.stderr)
     
     # Check if we have any credentials
     if not CREDENTIALS:
         # Try to load from legacy location if no secure credentials found
         legacy_file = SCRIPT_DIR / "credentials.json"
         if legacy_file.exists():
-            print(f"Info: Found legacy credentials.json. Auto-migrating to secure storage...", file=sys.stderr)
+            print("Info: Found legacy credentials.json. Auto-migrating to secure storage...", file=sys.stderr)
             if credential_manager.migrate_from_plain_json(delete_original=False):
                 CREDENTIALS = credential_manager.load_credentials()
                 print(f"Info: Migration successful. Using {credential_manager.get_active_backend().value} backend.", file=sys.stderr)
             else:
-                print(f"Warning: Migration failed. Loading from plain JSON.", file=sys.stderr)
+                print("Warning: Migration failed. Loading from plain JSON.", file=sys.stderr)
                 with open(legacy_file, 'r') as f:
                     CREDENTIALS = json.load(f)
         else:

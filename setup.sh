@@ -28,6 +28,12 @@ fi
 echo -e "${YELLOW}⚠️  Warning: This setup stores API keys in plain text.${NC}"
 echo -e "${YELLOW}   For secure storage, run: ./setup.sh --secure${NC}"
 echo ""
+read -r -p "Continue with insecure setup? (y/N): " yn
+case $yn in
+    [Yy]* ) ;;
+    * ) echo -e "${BLUE}Please run ./setup.sh --secure for secure credential storage${NC}"; exit 1;;
+esac
+echo ""
 
 # Check Python version
 echo "📋 Checking requirements..."

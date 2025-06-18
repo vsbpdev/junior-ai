@@ -207,6 +207,7 @@ class EnhancedPatternDetectionEngine:
         
         # Initialize caching
         self._sensitivity_cache = {}
+        self._credential_manager = None  # Cache for SecureCredentialManager
         self._cache_lock = threading.RLock()
         
         # Set up logging
@@ -593,9 +594,10 @@ class EnhancedPatternDetectionEngine:
         logger = logging.getLogger('pattern_detection')
         
         try:
-            # First try secure credential manager
-            credential_manager = SecureCredentialManager()
-            config = credential_manager.load_credentials()
+            # First try secure credential manager (cache instance to avoid recreation)
+            if self._credential_manager is None:
+                self._credential_manager = SecureCredentialManager()
+            config = self._credential_manager.load_credentials()
             
             # Fallback to file if no secure credentials
             if not config:

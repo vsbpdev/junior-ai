@@ -16,14 +16,12 @@ are found.
 
 import json
 import os
-import sys
 import logging
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Union
+from typing import Dict, Any, Optional, List
 from enum import Enum
 from abc import ABC, abstractmethod
 import base64
-import hashlib
 import platform
 import fcntl
 import tempfile
@@ -642,9 +640,7 @@ def check_credential_security() -> Dict[str, Any]:
     }
     
     # Determine security level
-    if manager.active_backend == CredentialBackend.ENVIRONMENT:
-        assessment["security_level"] = "high"
-    elif manager.active_backend == CredentialBackend.KEYRING:
+    if manager.active_backend in (CredentialBackend.ENVIRONMENT, CredentialBackend.KEYRING):
         assessment["security_level"] = "high"
     elif manager.active_backend == CredentialBackend.ENCRYPTED_FILE:
         assessment["security_level"] = "medium"

@@ -11,7 +11,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch, MagicMock, mock_open
+from unittest.mock import patch, MagicMock
 import shutil
 
 # Add parent directory to path for imports

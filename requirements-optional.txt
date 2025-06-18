@@ -4,4 +4,4 @@
 
 # Additional keyring backends (optional)
 # keyrings.alt>=5.0.0,<6.0.0  # Alternative keyring implementations
-# python-keyring-lib>=0.2.0    # Additional keyring utilities
+# python-keyring-lib>=0.2.0   # Additional keyring utilities
