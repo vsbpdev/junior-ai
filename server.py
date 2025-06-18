@@ -12,6 +12,9 @@ from pathlib import Path
 import time
 import threading
 
+# Import secure credential manager
+from secure_credentials import SecureCredentialManager, check_credential_security
+
 # Ensure unbuffered output
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 1)
 sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 1)
@@ -39,19 +42,44 @@ except ImportError as e:
 # Server version
 __version__ = "2.1.0"  # Updated version with pattern detection
 
-# Load credentials
+# Load credentials using secure system
 SCRIPT_DIR = Path(__file__).parent
-CREDENTIALS_FILE = SCRIPT_DIR / "credentials.json"
+credential_manager = SecureCredentialManager()
 
 try:
-    with open(CREDENTIALS_FILE, 'r') as f:
-        CREDENTIALS = json.load(f)
+    CREDENTIALS = credential_manager.load_credentials()
+    
+    # Log security status (only to stderr for debugging)
+    security_status = check_credential_security()
+    if security_status.get("security_level") == "low" and security_status.get("plain_json_exists"):
+        print("Warning: Using plain JSON credentials. Consider migrating to secure storage. "
+              "Run 'python3 migrate_credentials.py' to upgrade.", file=sys.stderr)
+    
+    # Check if we have any credentials
+    if not CREDENTIALS:
+        # Try to load from legacy location if no secure credentials found
+        legacy_file = SCRIPT_DIR / "credentials.json"
+        if legacy_file.exists():
+            print("Info: Found legacy credentials.json. Auto-migrating to secure storage...", file=sys.stderr)
+            if credential_manager.migrate_from_plain_json(delete_original=False):
+                CREDENTIALS = credential_manager.load_credentials()
+                print(f"Info: Migration successful. Using {credential_manager.get_active_backend().value} backend.", file=sys.stderr)
+            else:
+                print("Warning: Migration failed. Loading from plain JSON.", file=sys.stderr)
+                with open(legacy_file, 'r') as f:
+                    CREDENTIALS = json.load(f)
+        else:
+            raise Exception("No credentials found. Please configure credentials using one of:\n"
+                          "1. Environment variables (JUNIOR_AI_*)\n"
+                          "2. Run setup.sh to configure\n"
+                          "3. Create credentials.json from template")
+                          
 except Exception as e:
     print(json.dumps({
         "jsonrpc": "2.0",
         "error": {
             "code": -32603,
-            "message": f"Failed to load credentials.json: {str(e)}"
+            "message": f"Failed to load credentials: {str(e)}"
         }
     }), file=sys.stdout, flush=True)
     sys.exit(1)

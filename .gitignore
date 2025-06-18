@@ -30,6 +30,12 @@ config.ini
 .env.*
 secrets.json
 
+# Secure credential storage
+*.enc
+credentials.enc
+~/.junior-ai/
+.junior-ai/
+
 # Added by Task Master AI
 # Logs
 logs
