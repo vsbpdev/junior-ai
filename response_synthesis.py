@@ -161,8 +161,8 @@ class ResponseAnalyzer:
             return 'java'
         elif '#include' in code:
             return 'cpp'
-        else:
-            return 'text'
+        
+        return 'text'
 
 
 class BaseSynthesisStrategy(ABC):
@@ -531,7 +531,7 @@ class ExpertWeightedSynthesisStrategy(BaseSynthesisStrategy):
         pattern_category = context.get('pattern_category', PatternCategory.UNCERTAINTY)
         
         # Calculate weights
-        weights = self._calculate_weights(ai_responses.keys(), pattern_category)
+        weights = self._calculate_weights(list(ai_responses), pattern_category)
         
         # Extract weighted recommendations
         weighted_recommendations = self._extract_weighted_recommendations(ai_responses, weights)
@@ -703,8 +703,8 @@ class ResponseSynthesizer:
             return self._format_markdown(synthesized)
         elif format_type == "json":
             return self._format_json(synthesized)
-        else:
-            return self._format_text(synthesized)
+        
+        return self._format_text(synthesized)
     
     def _create_empty_response(self) -> SynthesizedResponse:
         """Create empty response when no AI responses available"""

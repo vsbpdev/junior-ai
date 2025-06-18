@@ -270,7 +270,7 @@ class TestSecureCredentialManager(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.temp_dir)
         # Clean up environment variables
-        for key in list(os.environ.keys()):
+        for key in list(os.environ):
             if key.startswith('JUNIOR_AI_'):
                 del os.environ[key]
     
@@ -371,7 +371,7 @@ class TestSecurityChecks(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.temp_dir)
         # Clean up environment variables
-        for key in list(os.environ.keys()):
+        for key in list(os.environ):
             if key.startswith('JUNIOR_AI_'):
                 del os.environ[key]
     

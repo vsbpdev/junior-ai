@@ -4,7 +4,6 @@ Pattern-Specific Response Handlers for Junior AI Assistant
 Handles AI consultations based on detected patterns
 """
 
-import json
 from typing import Dict, List, Optional, Any, Callable
 from dataclasses import dataclass
 from abc import ABC, abstractmethod

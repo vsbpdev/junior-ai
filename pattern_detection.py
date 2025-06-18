@@ -5,7 +5,7 @@ Improved context extraction and pattern matching
 """
 
 import re
-from typing import Dict, List, Optional, Set, Tuple, Union, Any, Protocol
+from typing import Dict, List, Optional, Union, Any, Protocol
 from dataclasses import dataclass, field
 from enum import Enum
 import json

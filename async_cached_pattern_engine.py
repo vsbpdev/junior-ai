@@ -218,7 +218,7 @@ class AsyncCachedPatternEngine:
             Dictionary with patterns, summary, and strategy
         """
         # Run pattern detection in executor to avoid blocking
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         patterns = await loop.run_in_executor(
             None, 
             self.pattern_engine.detect_patterns, 
@@ -301,7 +301,7 @@ class AsyncCachedPatternEngine:
         Returns:
             True if consultation should be triggered
         """
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         
         if threshold is not None:
             return await loop.run_in_executor(
@@ -327,7 +327,7 @@ class AsyncCachedPatternEngine:
         Returns:
             Pattern summary dictionary
         """
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         return await loop.run_in_executor(
             None,
             self.pattern_engine.get_pattern_summary,
@@ -344,7 +344,7 @@ class AsyncCachedPatternEngine:
         Returns:
             Consultation strategy dictionary
         """
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         return await loop.run_in_executor(
             None,
             self.pattern_engine.get_consultation_strategy,
