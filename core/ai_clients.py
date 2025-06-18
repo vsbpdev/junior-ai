@@ -1,0 +1,120 @@
+"""AI client initialization and management."""
+
+import sys
+from typing import Dict, Any, Optional
+from .config import get_credentials
+
+# Global AI clients storage
+AI_CLIENTS: Dict[str, Any] = {}
+
+
+def initialize_gemini_client(api_key: str) -> Optional[Any]:
+    """Initialize Gemini client."""
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        print("✅ GEMINI initialized successfully", file=sys.stderr)
+        return model
+    except Exception as e:
+        print(f"❌ Failed to initialize GEMINI: {str(e)}", file=sys.stderr)
+        return None
+
+
+def initialize_openai_compatible_client(
+    service_name: str,
+    api_key: str,
+    base_url: Optional[str] = None,
+    model_name: Optional[str] = None
+) -> Optional[Any]:
+    """Initialize OpenAI-compatible client (Grok, OpenAI, DeepSeek, OpenRouter)."""
+    try:
+        from openai import OpenAI
+        
+        client_kwargs = {"api_key": api_key}
+        if base_url:
+            client_kwargs["base_url"] = base_url
+            
+        client = OpenAI(**client_kwargs)
+        
+        # Store model name if provided
+        if model_name:
+            client.model_name = model_name
+            
+        print(f"✅ {service_name.upper()} initialized successfully", file=sys.stderr)
+        return client
+    except Exception as e:
+        print(f"❌ Failed to initialize {service_name.upper()}: {str(e)}", file=sys.stderr)
+        return None
+
+
+def initialize_all_clients() -> Dict[str, Any]:
+    """Initialize all configured AI clients."""
+    global AI_CLIENTS
+    
+    credentials = get_credentials()
+    
+    # Initialize GEMINI
+    if 'gemini' in credentials and credentials['gemini'].get('api_key'):
+        client = initialize_gemini_client(credentials['gemini']['api_key'])
+        if client:
+            AI_CLIENTS['gemini'] = client
+    
+    # Initialize GROK
+    if 'grok' in credentials and credentials['grok'].get('api_key'):
+        client = initialize_openai_compatible_client(
+            'grok',
+            credentials['grok']['api_key'],
+            credentials['grok'].get('base_url')
+        )
+        if client:
+            AI_CLIENTS['grok'] = client
+    
+    # Initialize OpenAI
+    if 'openai' in credentials and credentials['openai'].get('api_key'):
+        client = initialize_openai_compatible_client(
+            'openai',
+            credentials['openai']['api_key'],
+            model_name=credentials['openai'].get('model', 'gpt-4o-mini')
+        )
+        if client:
+            AI_CLIENTS['openai'] = client
+    
+    # Initialize DeepSeek
+    if 'deepseek' in credentials and credentials['deepseek'].get('api_key'):
+        client = initialize_openai_compatible_client(
+            'deepseek',
+            credentials['deepseek']['api_key'],
+            credentials['deepseek'].get('base_url')
+        )
+        if client:
+            AI_CLIENTS['deepseek'] = client
+    
+    # Initialize OpenRouter
+    if 'openrouter' in credentials and credentials['openrouter'].get('api_key'):
+        client = initialize_openai_compatible_client(
+            'openrouter',
+            credentials['openrouter']['api_key'],
+            'https://openrouter.ai/api/v1',
+            model_name=credentials['openrouter'].get('model', 'anthropic/claude-3.5-sonnet')
+        )
+        if client:
+            AI_CLIENTS['openrouter'] = client
+    
+    # Report initialization status
+    if AI_CLIENTS:
+        print(f"✅ Successfully initialized {len(AI_CLIENTS)} AI client(s): {', '.join(AI_CLIENTS.keys())}", file=sys.stderr)
+    else:
+        print("⚠️ No AI clients were initialized. Please check your credentials.", file=sys.stderr)
+    
+    return AI_CLIENTS
+
+
+def get_ai_client(ai_name: str) -> Optional[Any]:
+    """Get a specific AI client by name."""
+    return AI_CLIENTS.get(ai_name)
+
+
+def get_available_ai_clients() -> Dict[str, Any]:
+    """Get all available AI clients."""
+    return AI_CLIENTS
