@@ -4,7 +4,8 @@ from .mcp_protocol import (
     MCPProtocolHandler,
     ServerInfo,
     AIClientInfo,
-    PatternDetectionConfig
+    PatternDetectionConfig,
+    MCPHandlerConfig
 )
 
 from .tool_dispatcher import (
@@ -24,6 +25,7 @@ __all__ = [
     'ServerInfo',
     'AIClientInfo',
     'PatternDetectionConfig',
+    'MCPHandlerConfig',
     'ToolDispatcher',
     'register_tool_handler',
     'get_tool_handler',

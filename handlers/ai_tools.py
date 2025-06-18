@@ -1,6 +1,22 @@
-"""Handlers for individual AI tool calls."""
+"""Handlers for individual AI tool calls.
 
-from typing import Dict, Any
+This module implements handlers for AI-specific tools, providing specialized
+interfaces for different types of AI interactions. Each configured AI gets
+its own set of tools with specific capabilities.
+
+Tool types provided for each AI:
+- ask_{ai_name}: General purpose questions and prompts
+- {ai_name}_code_review: Code analysis and review
+- {ai_name}_think_deep: Extended reasoning and deep analysis
+- {ai_name}_brainstorm: Creative problem solving
+- {ai_name}_debug: Debugging assistance
+- {ai_name}_architecture: System design and architecture advice
+
+The handler dynamically generates tools based on available AI clients and
+routes requests to the appropriate AI with specialized prompts.
+"""
+
+from typing import Dict, Any, List
 from .base import BaseHandler
 from ai.caller import call_ai
 
@@ -8,10 +24,10 @@ from ai.caller import call_ai
 class AIToolsHandler(BaseHandler):
     """Handles individual AI tool calls."""
     
-    def get_tool_names(self) -> list[str]:
+    def get_tool_names(self) -> List[str]:
         """Return list of tool names this handler supports."""
         tools = []
-        for ai_name in self.ai_clients.keys():
+        for ai_name in self.ai_clients:
             tools.extend([
                 f"ask_{ai_name}",
                 f"{ai_name}_code_review",
@@ -29,26 +45,27 @@ class AIToolsHandler(BaseHandler):
         if not ai_name:
             return f"❌ Could not determine AI from tool name: {tool_name}"
         
-        # Route to appropriate handler method
-        if tool_name.startswith("ask_"):
-            return self._handle_ask(ai_name, arguments)
-        elif tool_name.endswith("_code_review"):
-            return self._handle_code_review(ai_name, arguments)
-        elif tool_name.endswith("_think_deep"):
-            return self._handle_think_deep(ai_name, arguments)
-        elif tool_name.endswith("_brainstorm"):
-            return self._handle_brainstorm(ai_name, arguments)
-        elif tool_name.endswith("_debug"):
-            return self._handle_debug(ai_name, arguments)
-        elif tool_name.endswith("_architecture"):
-            return self._handle_architecture(ai_name, arguments)
-        else:
-            return f"❌ Unknown tool type: {tool_name}"
+        # Dispatch table for tool routing
+        tool_handlers = {
+            lambda name: name.startswith("ask_"): self._handle_ask,
+            lambda name: name.endswith("_code_review"): self._handle_code_review,
+            lambda name: name.endswith("_think_deep"): self._handle_think_deep,
+            lambda name: name.endswith("_brainstorm"): self._handle_brainstorm,
+            lambda name: name.endswith("_debug"): self._handle_debug,
+            lambda name: name.endswith("_architecture"): self._handle_architecture,
+        }
+        
+        # Find matching handler
+        for condition, handler in tool_handlers.items():
+            if condition(tool_name):
+                return handler(ai_name, arguments)
+        
+        return f"❌ Unknown tool type: {tool_name}"
     
     def _extract_ai_name(self, tool_name: str) -> str:
         """Extract AI name from tool name."""
         # Check all configured AI names
-        for ai_name in self.ai_clients.keys():
+        for ai_name in self.ai_clients:
             if ai_name in tool_name:
                 return ai_name
         return ""
@@ -77,7 +94,7 @@ class AIToolsHandler(BaseHandler):
         
         prompt = f"""Please review the following code and provide feedback focused on {focus}:
 
-```
+```code
 {code}
 ```
 

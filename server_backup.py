@@ -244,7 +244,7 @@ class JuniorAIServer:
             while self.running:
                 try:
                     # Read line from stdin
-                    line = await asyncio.get_event_loop().run_in_executor(
+                    line = await asyncio.get_running_loop().run_in_executor(
                         None, sys.stdin.readline
                     )
                     

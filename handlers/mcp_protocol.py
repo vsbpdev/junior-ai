@@ -1,8 +1,24 @@
-"""MCP protocol handlers for initialization and tool listing."""
+"""MCP protocol handlers for initialization and tool listing.
+
+This module implements the Model Context Protocol (MCP) specification for
+Junior AI Assistant. It handles protocol initialization, tool discovery,
+and protocol metadata management.
+
+Key components:
+- ServerInfo: Server metadata for MCP protocol
+- AIClientInfo: Information about configured AI clients
+- PatternDetectionConfig: Configuration for pattern detection
+- MCPProtocolHandler: Main handler for MCP protocol operations
+
+The handler manages the protocol lifecycle including:
+- Protocol version negotiation
+- Capability advertisement
+- Tool discovery and registration
+- Configuration management
+"""
 
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
-from core.config import __version__
 
 
 @dataclass
@@ -28,6 +44,15 @@ class PatternDetectionConfig:
     accuracy_mode: bool = True
 
 
+@dataclass
+class MCPHandlerConfig:
+    """Configuration for MCP protocol handler capabilities."""
+    pattern_detection_enabled: bool = False
+    ai_consultation_enabled: bool = False
+    async_cache_enabled: bool = False
+    pattern_config: Optional[PatternDetectionConfig] = None
+
+
 class MCPProtocolHandler:
     """Handles MCP protocol initialization and tool listing."""
     
@@ -35,18 +60,18 @@ class MCPProtocolHandler:
         self,
         server_info: ServerInfo,
         ai_clients: Dict[str, AIClientInfo],
-        pattern_detection_available: bool = False,
-        ai_consultation_available: bool = False,
-        async_cache_available: bool = False,
-        pattern_config: Optional[PatternDetectionConfig] = None
+        config: Optional[MCPHandlerConfig] = None
     ):
         """Initialize the MCP protocol handler."""
         self.server_info = server_info
         self.ai_clients = ai_clients
-        self.pattern_detection_available = pattern_detection_available
-        self.ai_consultation_available = ai_consultation_available
-        self.async_cache_available = async_cache_available
-        self.pattern_config = pattern_config or PatternDetectionConfig()
+        self.config = config or MCPHandlerConfig()
+        
+        # For backward compatibility, expose individual flags
+        self.pattern_detection_available = self.config.pattern_detection_enabled
+        self.ai_consultation_available = self.config.ai_consultation_enabled
+        self.async_cache_available = self.config.async_cache_enabled
+        self.pattern_config = self.config.pattern_config or PatternDetectionConfig()
     
     def handle_initialize(self, request_id: Any) -> Dict[str, Any]:
         """Handle MCP initialization request."""
@@ -369,7 +394,7 @@ class MCPProtocolHandler:
         """Get individual AI tools for each configured AI."""
         tools = []
         
-        for ai_name in self.ai_clients.keys():
+        for ai_name in self.ai_clients:
             tools.extend([
                 # Basic interaction
                 {

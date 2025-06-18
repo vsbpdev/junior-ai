@@ -1,6 +1,25 @@
-"""Response formatting utilities for AI responses."""
+"""Response formatting utilities for AI responses.
 
-from typing import Dict, Any, List
+This module provides formatting functions to structure AI responses
+in a consistent and readable format. It handles various response types
+including single AI responses, multi-AI comparisons, debates, and
+collaborative problem-solving outputs.
+
+Key formatting functions:
+- format_ai_response: Format single AI response with headers
+- format_multi_ai_response: Format responses from multiple AIs
+- format_debate_response: Structure debate between two AIs
+- format_consensus_response: Format consensus-building outputs
+- format_collaborative_response: Format collaborative problem-solving
+
+The formatters ensure:
+- Consistent markdown formatting
+- Clear separation between different AI responses
+- Proper error response handling
+- Structured output for different collaboration modes
+"""
+
+from typing import Dict, List
 
 
 def format_ai_response(ai_name: str, response: str) -> str:

@@ -1,13 +1,31 @@
-"""Handlers for async cache tool calls."""
+"""Handlers for async cache tool calls.
 
-from typing import Dict, Any
+This module provides tools for managing and monitoring the asynchronous
+pattern detection cache system. It enables performance monitoring,
+cache management, and async pattern detection with caching benefits.
+
+Key tools:
+- cache_stats: View cache statistics including hit rates, memory usage,
+  and deduplication metrics
+- clear_cache: Clear the pattern detection cache with confirmation
+- async_pattern_check: Perform pattern detection using the async cached
+  pipeline for improved performance
+
+The cache system provides:
+- LRU eviction with configurable size limits
+- Request deduplication to avoid redundant computations
+- TTL-based expiration for time-sensitive patterns
+- Performance metrics and monitoring
+"""
+
+from typing import Dict, Any, List
 from .base import BaseHandler
 
 
 class CacheToolsHandler(BaseHandler):
     """Handles async cache related tool calls."""
     
-    def get_tool_names(self) -> list[str]:
+    def get_tool_names(self) -> List[str]:
         """Return list of tool names this handler supports."""
         return [
             "cache_stats",

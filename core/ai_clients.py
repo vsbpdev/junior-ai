@@ -8,13 +8,15 @@ from .config import get_credentials
 AI_CLIENTS: Dict[str, Any] = {}
 
 
-def initialize_gemini_client(api_key: str) -> Optional[Any]:
+def initialize_gemini_client(api_key: str, model_name: str = 'gemini-2.0-flash') -> Optional[Any]:
     """Initialize Gemini client."""
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        print("✅ GEMINI initialized successfully", file=sys.stderr)
+        model = genai.GenerativeModel(model_name)
+        # Store model name for later reference
+        model.model_name = model_name
+        print(f"✅ GEMINI initialized successfully with model {model_name}", file=sys.stderr)
         return model
     except Exception as e:
         print(f"❌ Failed to initialize GEMINI: {str(e)}", file=sys.stderr)
@@ -56,7 +58,8 @@ def initialize_all_clients() -> Dict[str, Any]:
     
     # Initialize GEMINI
     if 'gemini' in credentials and credentials['gemini'].get('api_key'):
-        client = initialize_gemini_client(credentials['gemini']['api_key'])
+        model_name = credentials['gemini'].get('model', 'gemini-2.0-flash')
+        client = initialize_gemini_client(credentials['gemini']['api_key'], model_name)
         if client:
             AI_CLIENTS['gemini'] = client
     
@@ -65,7 +68,8 @@ def initialize_all_clients() -> Dict[str, Any]:
         client = initialize_openai_compatible_client(
             'grok',
             credentials['grok']['api_key'],
-            credentials['grok'].get('base_url')
+            credentials['grok'].get('base_url'),
+            model_name=credentials['grok'].get('model', 'grok-3')
         )
         if client:
             AI_CLIENTS['grok'] = client
@@ -85,7 +89,8 @@ def initialize_all_clients() -> Dict[str, Any]:
         client = initialize_openai_compatible_client(
             'deepseek',
             credentials['deepseek']['api_key'],
-            credentials['deepseek'].get('base_url')
+            credentials['deepseek'].get('base_url'),
+            model_name=credentials['deepseek'].get('model', 'deepseek-chat')
         )
         if client:
             AI_CLIENTS['deepseek'] = client
@@ -103,7 +108,7 @@ def initialize_all_clients() -> Dict[str, Any]:
     
     # Report initialization status
     if AI_CLIENTS:
-        print(f"✅ Successfully initialized {len(AI_CLIENTS)} AI client(s): {', '.join(AI_CLIENTS.keys())}", file=sys.stderr)
+        print(f"✅ Successfully initialized {len(AI_CLIENTS)} AI client(s): {', '.join(AI_CLIENTS)}", file=sys.stderr)
     else:
         print("⚠️ No AI clients were initialized. Please check your credentials.", file=sys.stderr)
     

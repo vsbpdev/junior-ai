@@ -1,12 +1,38 @@
 #!/usr/bin/env python3
-"""Junior AI Assistant MCP Server - Simplified Modular Version."""
+"""Junior AI Assistant MCP Server - Simplified Modular Version.
+
+This is the main entry point for the Junior AI Assistant MCP server.
+The server has been refactored into a clean modular architecture with
+clear separation of concerns.
+
+Architecture overview:
+- core/: Core utilities, configuration, and AI client management
+- ai/: AI calling and response formatting functionality
+- handlers/: Tool handlers implementing business logic
+- pattern/: Pattern detection engine management
+- server/: Server lifecycle and JSON-RPC protocol handling
+
+The server supports:
+- Multiple AI providers (Gemini, Grok, OpenAI, DeepSeek, OpenRouter)
+- Pattern detection with AI consultation
+- Collaborative AI tools (debates, consensus, etc.)
+- Async pattern caching for performance
+- Manual override controls
+- Comprehensive error handling and graceful degradation
+
+The modular design allows for:
+- Easy addition of new AI providers
+- Clear separation between protocol handling and business logic
+- Testable components with minimal coupling
+- Optional features that gracefully degrade when unavailable
+"""
 
 import os
 import sys
 import json
 import asyncio
 import signal
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 # Ensure unbuffered output for MCP
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 1)
@@ -241,7 +267,8 @@ class JuniorAIServer:
         try:
             while self.running:
                 try:
-                    line = await asyncio.get_event_loop().run_in_executor(None, sys.stdin.readline)
+                    loop = asyncio.get_running_loop()
+                    line = await loop.run_in_executor(None, sys.stdin.readline)
                     if not line:
                         break
                     

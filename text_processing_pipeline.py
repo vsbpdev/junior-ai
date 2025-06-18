@@ -431,7 +431,7 @@ class AsyncTextProcessingPipeline:
     async def _process_chunk_async(self, chunk: TextChunk) -> ProcessingResult:
         """Process a chunk asynchronously"""
         # Run pattern detection in executor to avoid blocking
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         patterns = await loop.run_in_executor(
             None, self.pattern_engine.detect_patterns, chunk.content
         )

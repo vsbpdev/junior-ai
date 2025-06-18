@@ -1,4 +1,22 @@
-"""AI calling functionality."""
+"""AI calling functionality for Junior AI Assistant.
+
+This module provides the core functionality for calling individual AI models
+and coordinating multi-AI calls. It handles the differences between various
+AI providers (Gemini vs OpenAI-compatible) and provides both synchronous
+and asynchronous interfaces.
+
+Key functions:
+- call_ai: Synchronous call to a single AI with error handling
+- call_ai_async: Async wrapper for AI calls
+- call_multiple_ais: Parallel execution of multiple AI calls
+- get_ai_model_info: Retrieve information about configured AI models
+
+The module supports:
+- Temperature validation and parameter handling
+- Provider-specific API differences (Gemini vs OpenAI)
+- Concurrent multi-AI execution with proper event loop management
+- Graceful error handling and fallback behavior
+"""
 
 import asyncio
 from typing import Optional, List, Dict, Any
@@ -27,16 +45,17 @@ def call_ai(ai_name: str, prompt: str, temperature: float = 0.7) -> str:
             )
             return response.text
         else:
-            # OpenAI-compatible clients
+            # OpenAI-compatible clients - get model from client
             model = getattr(client, 'model_name', None)
-            if ai_name == 'grok':
-                model = 'grok-beta'
-            elif ai_name == 'deepseek':
-                model = 'deepseek-chat'
-            elif ai_name == 'openai' and not model:
-                model = 'gpt-4o-mini'
-            elif ai_name == 'openrouter' and not model:
-                model = 'anthropic/claude-3.5-sonnet'
+            if not model:
+                # Fallback only if model_name is not set
+                default_models = {
+                    'grok': 'grok-3',
+                    'deepseek': 'deepseek-chat',
+                    'openai': 'gpt-4o',
+                    'openrouter': 'openai/gpt-4o'
+                }
+                model = default_models.get(ai_name, 'gpt-4o-mini')
             
             response = client.chat.completions.create(
                 model=model,
@@ -60,7 +79,7 @@ def call_multiple_ais(prompt: str, ai_list: Optional[List[str]] = None, temperat
     from core.ai_clients import get_available_ai_clients
     
     if ai_list is None:
-        ai_list = list(get_available_ai_clients().keys())
+        ai_list = list(get_available_ai_clients())
     
     responses = {}
     
@@ -107,18 +126,11 @@ def get_ai_model_info(ai_name: str) -> Dict[str, Any]:
         "provider": ai_name
     }
     
-    if ai_name == 'gemini':
-        info["model"] = "gemini-1.5-flash"
-    elif hasattr(client, 'model_name'):
+    # Get model name from client
+    if hasattr(client, 'model_name'):
         info["model"] = client.model_name
     else:
-        # Default models
-        model_map = {
-            'grok': 'grok-beta',
-            'deepseek': 'deepseek-chat',
-            'openai': 'gpt-4o-mini',
-            'openrouter': 'anthropic/claude-3.5-sonnet'
-        }
-        info["model"] = model_map.get(ai_name, "unknown")
+        # This should not happen if clients are properly initialized
+        info["model"] = "unknown"
     
     return info

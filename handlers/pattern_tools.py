@@ -1,14 +1,40 @@
-"""Handlers for pattern detection tool calls."""
+"""Handlers for pattern detection tool calls.
 
-import json
-from typing import Dict, Any
+This module implements comprehensive pattern detection and AI consultation
+tools. It provides interfaces for detecting code patterns that may benefit
+from AI analysis, managing pattern detection sensitivity, and controlling
+the AI consultation process.
+
+Pattern detection tools:
+- pattern_check: Analyze text for patterns requiring AI consultation
+- junior_consult: Smart AI consultation based on detected patterns
+- pattern_stats: View pattern detection statistics
+- get_sensitivity_config: View current sensitivity settings
+- update_sensitivity: Modify detection sensitivity levels
+
+Manual override tools:
+- toggle_pattern_detection: Enable/disable pattern detection globally
+- toggle_category: Enable/disable specific pattern categories
+- add_pattern_keywords: Add custom keywords to categories
+- remove_pattern_keywords: Remove keywords from categories
+- list_pattern_keywords: List all keywords for a category
+- force_consultation: Force AI consultation regardless of patterns
+
+AI consultation manager tools:
+- ai_consultation_strategy: Get recommended AI strategy for patterns
+- ai_consultation_metrics: View AI consultation performance metrics
+- ai_consultation_audit: Access consultation history and audit trail
+- ai_governance_report: Export compliance and governance reports
+"""
+
+from typing import Dict, Any, List
 from .base import BaseHandler
 
 
 class PatternToolsHandler(BaseHandler):
     """Handles pattern detection related tool calls."""
     
-    def get_tool_names(self) -> list[str]:
+    def get_tool_names(self) -> List[str]:
         """Return list of tool names this handler supports."""
         return [
             "pattern_check",
@@ -61,8 +87,8 @@ class PatternToolsHandler(BaseHandler):
             return self._handle_ai_consultation_audit(arguments)
         elif tool_name == "ai_governance_report":
             return self._handle_ai_governance_report(arguments)
-        else:
-            return f"❌ Unknown pattern tool: {tool_name}"
+        
+        return f"❌ Unknown pattern tool: {tool_name}"
     
     def _handle_pattern_check(self, arguments: Dict[str, Any]) -> str:
         """Handle pattern check request."""
@@ -128,14 +154,14 @@ class PatternToolsHandler(BaseHandler):
                     force_multi_ai=force_multi_ai
                 )
                 return response if response else "❌ No consultation response generated"
-            else:
-                # No patterns detected, use default AI
-                from ai.caller import call_ai
-                default_ai = self.credentials.get('pattern_detection', {}).get('default_junior', 'openrouter')
-                if default_ai in self.ai_clients:
-                    return call_ai(default_ai, context)
-                else:
-                    return "❌ Default AI not available and no patterns detected"
+            
+            # No patterns detected, use default AI
+            from ai.caller import call_ai
+            default_ai = self.credentials.get('pattern_detection', {}).get('default_junior', 'openrouter')
+            if default_ai in self.ai_clients:
+                return call_ai(default_ai, context)
+            
+            return "❌ Default AI not available and no patterns detected"
                     
         except Exception as e:
             return f"❌ Error during consultation: {str(e)}"
@@ -202,8 +228,8 @@ class PatternToolsHandler(BaseHandler):
                     category_overrides=category_overrides
                 )
                 return "✅ Sensitivity configuration updated successfully"
-            else:
-                return "❌ Sensitivity update not supported by pattern engine"
+            
+            return "❌ Sensitivity update not supported by pattern engine"
                 
         except Exception as e:
             return f"❌ Error updating sensitivity: {str(e)}"
@@ -245,8 +271,8 @@ class PatternToolsHandler(BaseHandler):
             if hasattr(self.pattern_engine, 'toggle_category'):
                 self.pattern_engine.toggle_category(category, enabled)
                 return f"✅ Category '{category}' {'enabled' if enabled else 'disabled'}"
-            else:
-                return "❌ Category toggle not supported by pattern engine"
+            
+            return "❌ Category toggle not supported by pattern engine"
                 
         except Exception as e:
             return f"❌ Error toggling category: {str(e)}"
@@ -266,8 +292,8 @@ class PatternToolsHandler(BaseHandler):
             if hasattr(self.pattern_engine, 'add_keywords'):
                 self.pattern_engine.add_keywords(category, keywords)
                 return f"✅ Added {len(keywords)} keywords to '{category}' category"
-            else:
-                return "❌ Keyword management not supported by pattern engine"
+            
+            return "❌ Keyword management not supported by pattern engine"
                 
         except Exception as e:
             return f"❌ Error adding keywords: {str(e)}"
@@ -287,8 +313,8 @@ class PatternToolsHandler(BaseHandler):
             if hasattr(self.pattern_engine, 'remove_keywords'):
                 self.pattern_engine.remove_keywords(category, keywords)
                 return f"✅ Removed {len(keywords)} keywords from '{category}' category"
-            else:
-                return "❌ Keyword management not supported by pattern engine"
+            
+            return "❌ Keyword management not supported by pattern engine"
                 
         except Exception as e:
             return f"❌ Error removing keywords: {str(e)}"
@@ -315,8 +341,8 @@ class PatternToolsHandler(BaseHandler):
                     output += "No keywords configured for this category."
                 
                 return output
-            else:
-                return "❌ Keyword listing not supported by pattern engine"
+            
+            return "❌ Keyword listing not supported by pattern engine"
                 
         except Exception as e:
             return f"❌ Error listing keywords: {str(e)}"

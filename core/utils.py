@@ -1,5 +1,6 @@
 """Utility functions for Junior AI Assistant."""
 
+import sys
 from typing import Any, Dict, Optional
 
 

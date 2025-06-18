@@ -1,7 +1,24 @@
-"""Tool dispatcher for routing tool calls to appropriate handlers."""
+"""Tool dispatcher for routing tool calls to appropriate handlers.
+
+This module implements the central dispatching mechanism for tool calls
+in the Junior AI Assistant. It routes incoming tool requests to the
+appropriate handler based on tool name registration.
+
+Key components:
+- ToolDispatcher: Main dispatcher that routes tool calls to handlers
+- Special handler support: Allows registration of custom handlers for
+  specific tools outside the normal handler hierarchy
+- Helper functions: Convenience functions for handler registration and lookup
+
+The dispatcher provides:
+- Automatic routing based on tool name
+- Support for special/custom handlers
+- Consistent error handling and reporting
+- Handler registration and discovery
+"""
 
 from typing import Dict, Any, Optional, Callable
-from .base import HandlerRegistry, HandlerContext
+from .base import HandlerRegistry
 
 
 class ToolDispatcher:
@@ -20,7 +37,10 @@ class ToolDispatcher:
         """Route a tool call to the appropriate handler."""
         # Check for special handlers first
         if tool_name in self._special_handlers:
-            return self._special_handlers[tool_name](arguments)
+            try:
+                return self._special_handlers[tool_name](arguments)
+            except Exception as e:
+                return f"❌ Error in special handler for '{tool_name}': {str(e)}"
         
         # Use registry to find handler
         try:

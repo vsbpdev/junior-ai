@@ -1,4 +1,23 @@
-"""JSON-RPC protocol handling utilities."""
+"""JSON-RPC protocol handling utilities.
+
+This module implements JSON-RPC 2.0 protocol utilities for the MCP server.
+It provides functions for sending responses, handling errors, and parsing
+incoming messages according to the JSON-RPC specification.
+
+Key functions:
+- send_response: Send JSON-RPC response to stdout
+- send_error: Send properly formatted error responses
+- parse_json_rpc: Parse incoming JSON-RPC messages
+- create_result_response: Create standard result responses
+- create_tool_result: Format tool results for MCP protocol
+
+Error codes follow JSON-RPC 2.0 specification:
+- PARSE_ERROR (-32700): Invalid JSON
+- INVALID_REQUEST (-32600): Invalid request structure
+- METHOD_NOT_FOUND (-32601): Unknown method
+- INVALID_PARAMS (-32602): Invalid method parameters
+- INTERNAL_ERROR (-32603): Internal server error
+"""
 
 import json
 import sys

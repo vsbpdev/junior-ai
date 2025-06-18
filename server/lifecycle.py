@@ -1,9 +1,27 @@
-"""Server lifecycle management."""
+"""Server lifecycle management for Junior AI Assistant.
+
+This module manages the server's lifecycle including startup, shutdown,
+and graceful termination. It provides signal handling for clean shutdown
+and resource cleanup mechanisms.
+
+Key components:
+- ServerLifecycle: Main lifecycle manager handling server state and
+  shutdown coordination
+- cleanup_resources: Utility function for cleaning up multiple resources
+  with different cleanup interfaces
+
+The lifecycle manager supports:
+- Signal handling (SIGINT, SIGTERM) for graceful shutdown
+- Registration of cleanup handlers
+- Async and sync cleanup handler support
+- Resource cleanup with multiple interface patterns (cleanup, close, shutdown)
+- Event loop integration for async operations
+"""
 
 import sys
 import signal
 import asyncio
-from typing import Optional, Callable, Any
+from typing import Callable, Any
 
 
 class ServerLifecycle:
@@ -28,9 +46,14 @@ class ServerLifecycle:
             print(f"\nReceived signal {signum}, initiating shutdown...", file=sys.stderr)
             self.running = False
             # Set a flag to exit the event loop
-            asyncio.get_event_loop().call_soon_threadsafe(
-                lambda: setattr(self, 'shutdown_requested', True)
-            )
+            try:
+                loop = asyncio.get_running_loop()
+                loop.call_soon_threadsafe(
+                    lambda: setattr(self, 'shutdown_requested', True)
+                )
+            except RuntimeError:
+                # No running loop, just set the flag
+                self.shutdown_requested = True
         
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)

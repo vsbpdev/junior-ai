@@ -4,10 +4,9 @@ AI Consultation Manager for Junior AI Assistant
 Intelligent AI selection, coordination, and consultation management
 """
 
-import json
 import time
 import uuid
-from typing import Dict, List, Optional, Any, Tuple, Callable
+from typing import Dict, List, Optional, Any, Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime
@@ -369,9 +368,9 @@ class AIConsultationManager:
         if requires_multi_ai:
             # Use top 3 AIs for multi-AI consultation
             return [ai[0] for ai in sorted_ais[:3]]
-        else:
-            # Use best matching AI
-            return [sorted_ais[0][0]] if sorted_ais else ["openrouter"]
+        
+        # Use best matching AI
+        return [sorted_ais[0][0]] if sorted_ais else ["openrouter"]
     
     def _generate_consultation_prompts(self,
                                      patterns: List[PatternMatch],
@@ -487,9 +486,9 @@ IMPORTANT: Present your unique perspective on the best approach. Consider:
             audit.responses_received[ai_name] = response
             audit.ais_consulted.append(ai_name)
             return {ai_name: response}
-        else:
-            # Fallback for testing
-            return {ai_name: f"Test response from {ai_name}"}
+        
+        # Fallback for testing
+        return {ai_name: f"Test response from {ai_name}"}
     
     def _execute_multi_consultation(self, ai_names: List[str], prompt: str, audit: ConsultationAudit) -> Dict[str, str]:
         """Execute multi-AI consultation in parallel"""

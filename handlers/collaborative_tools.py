@@ -1,4 +1,22 @@
-"""Handlers for collaborative AI tool calls."""
+"""Handlers for collaborative AI tool calls.
+
+This module implements multi-AI collaboration tools that leverage multiple
+AI models working together. These tools enable different collaboration
+patterns for enhanced problem-solving and decision-making.
+
+Collaboration modes:
+- ask_all_ais: Parallel consultation of all available AIs
+- ai_debate: Two AIs presenting different perspectives on a topic
+- collaborative_solve: Multiple approaches (sequential, parallel, debate)
+  for complex problem solving
+- ai_consensus: Building consensus among multiple AI opinions
+
+The handler supports various collaboration strategies:
+- Sequential: Each AI builds upon previous responses
+- Parallel: All AIs work independently on the same problem
+- Debate: AIs present contrasting viewpoints with optional synthesis
+- Consensus: Aggregating multiple perspectives into unified recommendations
+"""
 
 from typing import Dict, Any, List
 from .base import BaseHandler
@@ -14,7 +32,7 @@ from ai.response_formatter import (
 class CollaborativeToolsHandler(BaseHandler):
     """Handles multi-AI collaborative tool calls."""
     
-    def get_tool_names(self) -> list[str]:
+    def get_tool_names(self) -> List[str]:
         """Return list of tool names this handler supports."""
         # Only available if multiple AIs are configured
         if len(self.ai_clients) > 1:
@@ -28,16 +46,19 @@ class CollaborativeToolsHandler(BaseHandler):
     
     def handle(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
         """Handle a collaborative tool call."""
-        if tool_name == "ask_all_ais":
-            return self._handle_ask_all_ais(arguments)
-        elif tool_name == "ai_debate":
-            return self._handle_ai_debate(arguments)
-        elif tool_name == "collaborative_solve":
-            return self._handle_collaborative_solve(arguments)
-        elif tool_name == "ai_consensus":
-            return self._handle_ai_consensus(arguments)
-        else:
-            return f"❌ Unknown collaborative tool: {tool_name}"
+        # Dispatch table for collaborative tools
+        tool_handlers = {
+            "ask_all_ais": self._handle_ask_all_ais,
+            "ai_debate": self._handle_ai_debate,
+            "collaborative_solve": self._handle_collaborative_solve,
+            "ai_consensus": self._handle_ai_consensus,
+        }
+        
+        handler = tool_handlers.get(tool_name)
+        if handler:
+            return handler(arguments)
+        
+        return f"❌ Unknown collaborative tool: {tool_name}"
     
     def _handle_ask_all_ais(self, arguments: Dict[str, Any]) -> str:
         """Handle asking all AIs the same question."""
@@ -100,16 +121,20 @@ Be thorough but concise."""
         if not problem:
             return "❌ Missing required parameter: problem"
         
-        available_ais = list(self.ai_clients.keys())
+        available_ais = list(self.ai_clients)
         
-        if approach == "sequential":
-            return self._solve_sequential(problem, available_ais)
-        elif approach == "parallel":
-            return self._solve_parallel(problem, available_ais)
-        elif approach == "debate":
-            return self._solve_debate(problem, available_ais)
-        else:
-            return f"❌ Unknown approach: {approach}"
+        # Dispatch table for solving approaches
+        solve_handlers = {
+            "sequential": self._solve_sequential,
+            "parallel": self._solve_parallel,
+            "debate": self._solve_debate,
+        }
+        
+        handler = solve_handlers.get(approach)
+        if handler:
+            return handler(problem, available_ais)
+        
+        return f"❌ Unknown approach: {approach}"
     
     def _solve_sequential(self, problem: str, ai_list: List[str]) -> str:
         """Sequential problem solving - each AI builds on previous."""

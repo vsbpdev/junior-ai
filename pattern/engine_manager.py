@@ -1,4 +1,28 @@
-"""Pattern Engine Manager - Centralized initialization and management of pattern detection components."""
+"""Pattern Engine Manager - Centralized initialization and management of pattern detection components.
+
+This module provides centralized management for all pattern detection
+subsystems in Junior AI Assistant. It handles the initialization,
+configuration, and lifecycle of pattern detection engines, response
+managers, and AI consultation components.
+
+Key responsibilities:
+- Initialize and configure pattern detection engines (sync and async)
+- Manage text processing pipelines
+- Set up response and AI consultation managers
+- Handle component lifecycle and cleanup
+- Provide unified access to all pattern detection subsystems
+
+Components managed:
+- PatternDetectionEngine: Core synchronous pattern detection
+- AsyncCachedPatternEngine: High-performance async pattern detection with caching
+- TextProcessingPipeline: Text analysis and preprocessing
+- PatternResponseManager: AI response orchestration for patterns
+- AIConsultationManager: Intelligent AI selection and consultation
+
+The manager ensures proper initialization order, handles dependencies
+between components, and provides graceful degradation when optional
+components are unavailable.
+"""
 
 import sys
 import os

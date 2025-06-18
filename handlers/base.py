@@ -1,7 +1,25 @@
-"""Base handler classes and interfaces."""
+"""Base handler classes and interfaces for the Junior AI Assistant.
+
+This module provides the foundational classes and interfaces for building
+tool handlers in the modular server architecture. It implements a registry
+pattern for dynamic handler discovery and routing.
+
+Key classes:
+- HandlerContext: Shared context passed to all handlers containing AI clients,
+  pattern engines, and other shared resources
+- BaseHandler: Abstract base class that all tool handlers must inherit from
+- HandlerRegistry: Central registry for registering and routing tool calls
+  to appropriate handlers
+
+The handler system supports:
+- Dynamic tool registration
+- Shared resource management through context
+- Consistent error handling
+- Tool routing and dispatch
+"""
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 
 
@@ -32,7 +50,7 @@ class BaseHandler(ABC):
         self.credentials = context.credentials
     
     @abstractmethod
-    def get_tool_names(self) -> list[str]:
+    def get_tool_names(self) -> List[str]:
         """Return list of tool names this handler supports."""
         pass
     
