@@ -75,8 +75,6 @@ def initialize_openai_compatible_client(
 
 def initialize_all_clients() -> Dict[str, Any]:
     """Initialize all configured AI clients."""
-    global AI_CLIENTS
-    
     credentials = get_credentials()
     
     # Initialize GEMINI

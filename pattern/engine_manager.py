@@ -281,7 +281,6 @@ _default_manager = None
 
 def get_pattern_engine() -> Optional[Any]:
     """Get the default pattern engine."""
-    global _default_manager
     if _default_manager:
         return _default_manager.get_pattern_engine()
     return None
@@ -289,7 +288,6 @@ def get_pattern_engine() -> Optional[Any]:
 
 def get_response_manager() -> Optional[Any]:
     """Get the default response manager."""
-    global _default_manager
     if _default_manager:
         return _default_manager.get_response_manager()
     return None
@@ -297,7 +295,6 @@ def get_response_manager() -> Optional[Any]:
 
 def get_ai_consultation_manager() -> Optional[Any]:
     """Get the default AI consultation manager."""
-    global _default_manager
     if _default_manager:
         return _default_manager.get_ai_consultation_manager()
     return None
@@ -305,7 +302,6 @@ def get_ai_consultation_manager() -> Optional[Any]:
 
 def get_async_pipeline() -> Optional[Any]:
     """Get the default async pipeline."""
-    global _default_manager
     if _default_manager:
         return _default_manager.get_async_pipeline()
     return None
