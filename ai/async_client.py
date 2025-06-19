@@ -228,7 +228,10 @@ class AsyncOpenAICompatibleClient(AsyncAIClient):
         if self._client:
             # Check if client has close method before calling
             if hasattr(self._client, 'close') and callable(self._client.close):
-                await self._client.close()
+                try:
+                    await self._client.close()
+                except Exception as e:
+                    logger.warning(f"Error closing {self.provider.value} client: {e}")
         self._initialized = False
 
 
