@@ -1,11 +1,34 @@
 """AI client initialization and management."""
 
 import sys
+import asyncio  # Used in async functions below (initialize_all_clients_async, cleanup_async_ai_clients)
 from typing import Dict, Any, Optional
 from .config import get_credentials
 
 # Global AI clients storage
 AI_CLIENTS: Dict[str, Any] = {}
+
+# Async support will be imported dynamically to avoid circular imports
+HAS_ASYNC_SUPPORT = False
+ASYNC_AI_CLIENTS = {}
+
+def _import_async_support():
+    """Dynamically import async support to avoid circular imports."""
+    global HAS_ASYNC_SUPPORT, ASYNC_AI_CLIENTS
+    try:
+        import sys
+        import os
+        # Add parent directory to path
+        sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+        from ai.async_client import ASYNC_AI_CLIENTS as _async_clients
+        ASYNC_AI_CLIENTS = _async_clients
+        HAS_ASYNC_SUPPORT = True
+        return True
+    except ImportError as e:
+        print(f"Async client import failed: {e}", file=sys.stderr)
+        HAS_ASYNC_SUPPORT = False
+        ASYNC_AI_CLIENTS = {}
+        return False
 
 
 def initialize_gemini_client(api_key: str, model_name: str = 'gemini-2.0-flash') -> Optional[Any]:
@@ -123,3 +146,50 @@ def get_ai_client(ai_name: str) -> Optional[Any]:
 def get_available_ai_clients() -> Dict[str, Any]:
     """Get all available AI clients."""
     return AI_CLIENTS
+
+
+async def initialize_all_clients_async() -> Dict[str, Any]:
+    """Initialize all AI clients including async versions."""
+    # First initialize sync clients
+    sync_clients = initialize_all_clients()
+    
+    # Try to import and initialize async clients
+    if _import_async_support():
+        try:
+            from ai.async_client import initialize_async_ai_clients
+            credentials = get_credentials()
+            # Filter only AI-related credentials
+            ai_credentials = {
+                k: v for k, v in credentials.items() 
+                if k in ['gemini', 'grok', 'openai', 'deepseek', 'openrouter']
+            }
+            await initialize_async_ai_clients(ai_credentials)
+            print(f"✅ Async AI clients initialized: {', '.join(ASYNC_AI_CLIENTS.keys())}", file=sys.stderr)
+        except Exception as e:
+            print(f"⚠️ Failed to initialize async AI clients: {e}", file=sys.stderr)
+    
+    return sync_clients
+
+
+def get_async_ai_client(ai_name: str) -> Optional[Any]:
+    """Get a specific async AI client by name."""
+    if not HAS_ASYNC_SUPPORT:
+        _import_async_support()
+    return ASYNC_AI_CLIENTS.get(ai_name)
+
+
+def has_async_support() -> bool:
+    """Check if async AI support is available."""
+    if not HAS_ASYNC_SUPPORT:
+        _import_async_support()
+    return HAS_ASYNC_SUPPORT
+
+
+async def cleanup_async_ai_clients():
+    """Clean up all async AI clients."""
+    if _import_async_support():
+        try:
+            from ai.async_client import cleanup_async_ai_clients as cleanup_func
+            await cleanup_func()
+        except Exception as e:
+            print(f"Error cleaning up async AI clients: {e}", file=sys.stderr)

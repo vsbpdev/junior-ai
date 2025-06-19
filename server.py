@@ -45,6 +45,7 @@ from core import (
     initialize_all_clients,
     AI_CLIENTS
 )
+from core.ai_clients import initialize_all_clients_async
 
 # Handler imports
 from handlers.mcp_protocol import (
@@ -75,17 +76,15 @@ class JuniorAIServer:
         self.protocol_handler = None
         self.handler_registry = HandlerRegistry()
         self.pattern_manager = None
+        self._initialized = False
         
-        # Load credentials and initialize AI clients
-        self._initialize_components()
-        
-    def _initialize_components(self):
+    async def _initialize_components(self):
         """Initialize all server components."""
         # Load credentials
         credentials = load_credentials()
         
-        # Initialize AI clients
-        ai_clients = initialize_all_clients()
+        # Initialize AI clients (both sync and async)
+        ai_clients = await initialize_all_clients_async()
         
         # Create handler context
         context = HandlerContext(
@@ -261,6 +260,11 @@ class JuniorAIServer:
     
     async def run(self):
         """Run the main server loop."""
+        # Initialize components if not already done
+        if not self._initialized:
+            await self._initialize_components()
+            self._initialized = True
+        
         self.running = True
         print(f"Junior AI Assistant MCP Server v{__version__} started", file=sys.stderr)
         
@@ -296,9 +300,16 @@ class JuniorAIServer:
         """Clean up resources."""
         print("Shutting down server...", file=sys.stderr)
         
+        # Clean up async AI clients
+        try:
+            from core.ai_clients import cleanup_async_ai_clients
+            await cleanup_async_ai_clients()
+        except Exception as e:
+            print(f"Error cleaning up async AI clients: {e}", file=sys.stderr)
+        
         if self.pattern_manager:
             try:
-                self.pattern_manager.shutdown()
+                await self.pattern_manager.shutdown()
             except Exception as e:
                 print(f"Error during pattern manager shutdown: {e}", file=sys.stderr)
         

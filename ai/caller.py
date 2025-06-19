@@ -20,8 +20,15 @@ The module supports:
 
 import asyncio
 from typing import Optional, List, Dict, Any
-from core.ai_clients import get_ai_client
+from core.ai_clients import get_ai_client, get_async_ai_client, has_async_support
 from core.utils import validate_temperature, format_error_response
+
+# Import async support if available
+try:
+    from .async_client import call_ai_async as async_call_ai
+    HAS_ASYNC_CLIENTS = True
+except ImportError:
+    HAS_ASYNC_CLIENTS = False
 
 
 def call_ai(ai_name: str, prompt: str, temperature: float = 0.7) -> str:
@@ -70,7 +77,41 @@ def call_ai(ai_name: str, prompt: str, temperature: float = 0.7) -> str:
 
 
 async def call_ai_async(ai_name: str, prompt: str, temperature: float = 0.7) -> str:
-    """Async wrapper for call_ai."""
+    """Async wrapper for call_ai.
+    
+    Uses native async clients when available, falls back to sync version otherwise.
+    """
+    # Try to use async client if available
+    if HAS_ASYNC_CLIENTS and has_async_support():
+        async_client = get_async_ai_client(ai_name)
+        if async_client:
+            try:
+                # Validate temperature
+                temperature = validate_temperature(temperature)
+                # Use the async client
+                return await async_call_ai(
+                    ai_name=ai_name,
+                    prompt=prompt,
+                    temperature=temperature
+                )
+            except Exception as e:
+                # Log error but fall back to sync
+                import sys
+                print(f"⚠️ Async call failed for {ai_name}, falling back to sync: {e}", file=sys.stderr)
+                async_error = e
+                
+                # Try synchronous call as fallback
+                try:
+                    return call_ai(ai_name, prompt, temperature)
+                except Exception as sync_error:
+                    # Re-raise with both error contexts
+                    raise RuntimeError(
+                        f"Both async and sync calls failed. "
+                        f"Async error: {async_error}. "
+                        f"Sync error: {sync_error}"
+                    ) from sync_error
+    
+    # Fall back to synchronous call if no async support
     return call_ai(ai_name, prompt, temperature)
 
 
