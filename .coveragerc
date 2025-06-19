@@ -15,6 +15,22 @@ omit =
     htmlcov/*
     .coverage
     *.egg-info/*
+    # Legacy files - exclude from coverage
+    *_original.py
+    *_backup.py
+    *_improvements.py
+    *_enhancements.py
+    *_enhanced.py
+    demo_*.py
+    verify_*.py
+    fix_*.py
+    edge_case_*.py
+    performance_optimizations.py
+    resource_management_*.py
+    security_*.py
+    server_*.py
+    enhanced_*.py
+    migrate_credentials.py
 
 parallel = true
 concurrency = multiprocessing,thread

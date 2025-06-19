@@ -1,4 +1,17 @@
-"""Security vulnerability tests for Junior AI Assistant"""
+"""Security vulnerability tests for Junior AI Assistant
+
+IMPORTANT: These are currently placeholder/mock implementations for testing infrastructure.
+They provide basic validation patterns but do NOT test actual security measures.
+
+TODO: Replace placeholder implementations with real security tests before production:
+1. Integrate with actual credential loading and validation systems
+2. Test real input sanitization and validation functions
+3. Implement actual path traversal prevention checks
+4. Add integration with real rate limiting mechanisms
+5. Test actual file permission validation
+
+Priority: HIGH - These tests must be implemented before production deployment.
+"""
 
 import pytest
 import tempfile

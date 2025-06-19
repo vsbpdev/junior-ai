@@ -11,6 +11,9 @@ __version__ = "2.1.0"
 # Global credentials storage
 CREDENTIALS: Optional[Dict[str, Any]] = None
 
+# Credentials file path
+CREDENTIALS_FILE = Path.home() / '.config' / 'claude-mcp-servers' / 'junior-ai' / 'credentials.json'
+
 
 def load_credentials() -> Dict[str, Any]:
     """Load credentials using SecureCredentialManager."""
@@ -27,8 +30,7 @@ def load_credentials() -> Dict[str, Any]:
         manager = SecureCredentialManager()
         
         # Check if migration is needed
-        credentials_path = Path.home() / '.config' / 'claude-mcp-servers' / 'junior-ai' / 'credentials.json'
-        if credentials_path.exists():
+        if CREDENTIALS_FILE.exists():
             # Check if already using secure storage
             try:
                 # Try to load from secure storage first
@@ -37,17 +39,17 @@ def load_credentials() -> Dict[str, Any]:
                     # Already migrated
                     CREDENTIALS = test_creds
                     return CREDENTIALS
-            except:
+            except Exception:
                 pass
             
             # Need to migrate
             print("Migrating existing credentials to secure storage...", file=sys.stderr)
-            with open(credentials_path, 'r') as f:
+            with open(CREDENTIALS_FILE, 'r') as f:
                 old_creds = json.load(f)
             
             # Try to save to secure storage
             if hasattr(manager, 'migrate_credentials'):
-                if manager.migrate_credentials(old_creds, credentials_path):
+                if manager.migrate_credentials(old_creds, CREDENTIALS_FILE):
                     print("✅ Successfully migrated credentials to secure storage", file=sys.stderr)
                 else:
                     print("⚠️ Migration failed, will continue with existing credentials", file=sys.stderr)
@@ -66,9 +68,8 @@ def load_credentials() -> Dict[str, Any]:
         
         # Fallback to direct JSON loading
         try:
-            credentials_path = Path.home() / '.config' / 'claude-mcp-servers' / 'junior-ai' / 'credentials.json'
-            if credentials_path.exists():
-                with open(credentials_path, 'r') as f:
+            if CREDENTIALS_FILE.exists():
+                with open(CREDENTIALS_FILE, 'r') as f:
                     CREDENTIALS = json.load(f)
                     return CREDENTIALS
         except Exception as fallback_error:
