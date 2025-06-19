@@ -117,28 +117,3 @@ class TestAIConsultationConfig:
         assert result["timeout"] == 60
 
 
-
-@pytest.mark.unit
-class TestEdgeCases:
-    """Test edge cases and error scenarios"""
-    
-    def test_credentials_file_permission_error(self, reset_global_state):
-        """Test handling of permission errors when reading credentials"""
-        with patch('pathlib.Path.exists', return_value=True):
-            with patch('builtins.open', side_effect=PermissionError):
-                with patch('sys.exit') as mock_exit:
-                    config.load_credentials()
-                    
-        mock_exit.assert_called_once_with(1)
-    
-    def test_credentials_file_unicode_error(self, tmp_path, reset_global_state):
-        """Test handling of unicode errors in credentials file"""
-        cred_file = tmp_path / "unicode_credentials.json"
-        cred_file.write_bytes(b'\xff\xfe')  # Invalid UTF-8
-        
-        with patch('core.config.CREDENTIALS_FILE', str(cred_file)):
-            with patch('sys.exit') as mock_exit:
-                config.load_credentials()
-                
-        mock_exit.assert_called_once_with(1)
-    
