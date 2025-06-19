@@ -107,29 +107,11 @@ def get_credentials() -> Dict[str, Any]:
 def get_pattern_detection_config() -> Dict[str, Any]:
     """Get pattern detection configuration from credentials."""
     creds = get_credentials()
-    default_config = {
-        "enabled": True,
-        "sensitivity": "medium"
-    }
-    pattern_config = creds.get('pattern_detection', {})
-    # Merge with defaults
-    result = default_config.copy()
-    result.update(pattern_config)
-    return result
+    return creds.get('pattern_detection', {})
 
 
 def get_ai_consultation_config() -> Dict[str, Any]:
     """Get AI consultation configuration from credentials."""
     creds = get_credentials()
-    default_config = {
-        "strategy": "smart",
-        "require_consensus": False,
-        "min_ai_responses": 1,
-        "timeout": 30
-    }
-    # Try both field names for compatibility
-    ai_config = creds.get('ai_consultation', creds.get('ai_consultation_preferences', {}))
-    # Merge with defaults
-    result = default_config.copy()
-    result.update(ai_config)
-    return result
+    # Try both field names for compatibility  
+    return creds.get('ai_consultation', creds.get('ai_consultation_preferences', {}))
