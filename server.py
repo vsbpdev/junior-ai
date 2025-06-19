@@ -309,7 +309,7 @@ class JuniorAIServer:
         
         if self.pattern_manager:
             try:
-                self.pattern_manager.shutdown()
+                await self.pattern_manager.shutdown()
             except Exception as e:
                 print(f"Error during pattern manager shutdown: {e}", file=sys.stderr)
         

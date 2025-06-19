@@ -141,14 +141,15 @@ class AsyncGeminiClient(AsyncAIClient):
         generation_config.update(kwargs)
         
         try:
-            # Use asyncio timeout wrapper
-            async with asyncio.timeout(self.timeout):
-                # Gemini's generate_content_async method
-                response = await self._client.generate_content_async(
+            # Use asyncio.wait_for for Python 3.8+ compatibility
+            response = await asyncio.wait_for(
+                self._client.generate_content_async(
                     prompt,
                     generation_config=generation_config
-                )
-                return response.text
+                ),
+                timeout=self.timeout
+            )
+            return response.text
         except asyncio.TimeoutError:
             logger.error(f"Gemini request timed out after {self.timeout}s")
             raise

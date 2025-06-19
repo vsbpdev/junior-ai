@@ -245,16 +245,29 @@ class PatternEngineManager:
         if self.ai_consultation_manager:
             self.ai_consultation_manager.ai_clients = ai_callers
     
-    def shutdown(self):
+    async def shutdown(self):
         """Shutdown all components gracefully."""
-        components = [
-            self.async_pipeline,
+        # Handle async components first
+        if self.async_pipeline:
+            if hasattr(self.async_pipeline, 'close'):
+                try:
+                    await self.async_pipeline.close()
+                except Exception as e:
+                    print(f"Error closing async pipeline: {e}", file=sys.stderr)
+            elif hasattr(self.async_pipeline, 'cleanup'):
+                try:
+                    self.async_pipeline.cleanup()
+                except Exception as e:
+                    print(f"Error during async pipeline cleanup: {e}", file=sys.stderr)
+        
+        # Then handle sync components
+        sync_components = [
             self.text_pipeline,
             self.response_manager,
             self.ai_consultation_manager
         ]
         
-        for component in components:
+        for component in sync_components:
             if component and hasattr(component, 'cleanup'):
                 try:
                     component.cleanup()
