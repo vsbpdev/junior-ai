@@ -547,6 +547,8 @@ class EnhancedPatternDetectionEngine:
     
     def _parse_sensitivity_config(self, config: Dict) -> SensitivitySettings:
         """Parse and validate sensitivity configuration"""
+        logger = logging.getLogger('pattern_detection')
+        
         if not isinstance(config, dict):
             raise ConfigurationError("Configuration must be a JSON object")
         

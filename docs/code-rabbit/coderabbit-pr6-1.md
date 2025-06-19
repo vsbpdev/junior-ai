@@ -18,6 +18,7 @@ CodeRabbit reviewed the PR that fixes critical test infrastructure issues. The r
   - File: `pattern_detection.py` line 572
   - Issue: Using `logger` without proper initialization in the method
   - Recommendation: Add `logger = logging.getLogger('pattern_detection')` at the beginning of the method
+  - **Completed**: Added logger initialization at the beginning of _parse_sensitivity_config method
 
 ### 🔒 Security Issues
 
