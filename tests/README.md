@@ -6,7 +6,7 @@ This directory contains the comprehensive test suite for the Junior AI MCP serve
 
 ## Test Structure
 
-```
+```text
 tests/
 ├── unit/                   # Unit tests for individual components
 │   ├── core/              # Core module tests

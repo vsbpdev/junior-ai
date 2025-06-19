@@ -18,8 +18,7 @@ flake8>=7.0.0,<8.0.0
 isort>=5.13.0,<6.0.0
 
 # Development utilities  
-ipython>=8.0.0; python_version<"3.10"
-ipython>=8.20.0; python_version>="3.10"
+ipython>=8.0.0,<9.0.0
 ipdb>=0.13.13
 
 # Documentation

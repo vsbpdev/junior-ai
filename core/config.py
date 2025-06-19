@@ -60,7 +60,7 @@ def load_credentials() -> Dict[str, Any]:
                         # Already migrated
                         CREDENTIALS = test_creds
                         return CREDENTIALS
-                except Exception:
+                except (OSError, json.JSONDecodeError):
                     pass
                 
                 # Need to migrate

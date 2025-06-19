@@ -1,9 +1,6 @@
 """Unit tests for core.config module"""
 
-import json
-import sys
-from pathlib import Path
-from unittest.mock import Mock, patch, mock_open, MagicMock
+from unittest.mock import patch, MagicMock
 
 import pytest
 
@@ -20,9 +17,9 @@ class TestLoadCredentials:
         cred_file = tmp_path / "bad_credentials.json"
         cred_file.write_text("invalid json content")
         
-        with patch('core.config.CREDENTIALS_FILE', str(cred_file)):
-            with patch('sys.exit') as mock_exit:
-                config.load_credentials()
+        with patch('core.config.CREDENTIALS_FILE', str(cred_file)), \
+             patch('sys.exit') as mock_exit:
+            config.load_credentials()
                 
         mock_exit.assert_called_once_with(1)
     

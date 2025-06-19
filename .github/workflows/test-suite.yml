@@ -84,7 +84,6 @@ jobs:
     - name: Run Safety check
       run: |
         safety check --json --output safety-report.json || true
-        
     - name: Run Bandit security scan
       run: |
         bandit -r . -f json -o bandit-report.json || true
@@ -100,7 +99,7 @@ jobs:
   performance:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-    
+
     steps:
     - uses: actions/checkout@v4
 

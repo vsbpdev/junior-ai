@@ -1,7 +1,7 @@
 """Simplified unit tests for core.config module"""
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch
 
 from core import config
 

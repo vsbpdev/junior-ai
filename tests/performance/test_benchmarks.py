@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 # Import core modules for coverage
 try:
-    from core.config import load_credentials, get_default_credentials_path
+    from core.config import get_default_credentials_path
     from core.utils import safe_json_loads, format_error_message
     from core.ai_clients import get_client_type
     CORE_AVAILABLE = True
@@ -24,8 +24,6 @@ class TestPatternDetectionPerformance:
     
     def test_pattern_detection_speed(self, benchmark):
         """Benchmark pattern detection performance"""
-        # Sample text for testing
-        test_text = "This is a test with TODO items and password = 'secret'"
         
         def pattern_detection_mock():
             # Use actual utility functions for coverage
@@ -34,8 +32,7 @@ class TestPatternDetectionPerformance:
                 test_json = '{"patterns": ["security", "uncertainty"], "count": 2}'
                 result = safe_json_loads(test_json)
                 return result if result else {"patterns": [], "count": 0}
-            else:
-                return {"patterns": ["security", "uncertainty"], "count": 2}
+            return {"patterns": ["security", "uncertainty"], "count": 2}
         
         result = benchmark(pattern_detection_mock)
         assert result["count"] >= 0
@@ -51,8 +48,7 @@ class TestPatternDetectionPerformance:
                 # Test error message formatting performance
                 error_msg = format_error_message("Processing large text", Exception("test error"))
                 return len(large_text.split()) + len(error_msg.split())
-            else:
-                return len(large_text.split())
+            return len(large_text.split())
         
         result = benchmark(process_large_text)
         assert result > 0
@@ -69,8 +65,7 @@ class TestAIClientPerformance:
             if CORE_AVAILABLE:
                 client_type = get_client_type("openai")
                 return {"initialized": True, "client_type": client_type, "count": 5}
-            else:
-                return {"initialized": True, "count": 5}
+            return {"initialized": True, "count": 5}
         
         result = benchmark(mock_init)
         assert result["initialized"] is True
@@ -91,8 +86,7 @@ class TestCachePerformance:
                 # Ensure we exercise the function but don't depend on file existence
                 cache_result = mock_cache.get("key1", "default")
                 return cache_result if config_path else "fallback"
-            else:
-                return mock_cache.get("key1", "default")
+            return mock_cache.get("key1", "default")
         
         result = benchmark(cache_lookup)
         assert result in ["value1", "fallback"]

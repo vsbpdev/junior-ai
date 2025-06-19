@@ -1,7 +1,5 @@
 """Unit tests for core.ai_clients module"""
 
-import sys
-from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock, call
 
 import pytest

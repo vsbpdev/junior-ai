@@ -1,8 +1,6 @@
 """Integration tests for MCP protocol implementation"""
 
-import json
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
 
 # The actual server.py is in the root directory
 import sys

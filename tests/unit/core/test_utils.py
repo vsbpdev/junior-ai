@@ -1,6 +1,5 @@
 """Unit tests for core.utils module"""
 
-import json
 import pytest
 
 from core import utils
@@ -243,7 +242,7 @@ class TestIntegration:
         error = Exception("API request failed")
         result = utils.format_error_response(error, "Rate limit exceeded")
         
-        assert "❌ Rate limit exceeded: API request failed" == result
+        assert result == "❌ Rate limit exceeded: API request failed"
     
     def test_ai_name_formatting(self):
         """Test AI name formatting"""
