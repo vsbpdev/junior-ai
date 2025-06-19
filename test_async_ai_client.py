@@ -11,14 +11,12 @@ This script tests:
 
 import asyncio
 import time
-import json
-from typing import Dict, Any
 
 # Test imports
 from core.config import load_credentials
 from core.ai_clients import initialize_all_clients_async, cleanup_async_ai_clients
 from ai.async_client import call_ai_async, ASYNC_AI_CLIENTS
-from ai.caller import call_ai, call_multiple_ais
+from ai.caller import call_ai
 
 
 async def test_async_initialization():

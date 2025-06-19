@@ -2,7 +2,6 @@
 """Test to demonstrate the configuration parsing issue."""
 
 import json
-import tempfile
 import os
 import logging
 from pattern_detection import EnhancedPatternDetectionEngine
@@ -36,9 +35,10 @@ def test_empty_levels():
         # This should fail with ConfigurationError at line 551
         engine = EnhancedPatternDetectionEngine(config_path=config_path)
         print("ERROR: Engine created successfully (should have failed)")
+        assert engine is not None  # Make the usage explicit
     except Exception as e:
         print(f"Expected error: {type(e).__name__}: {e}")
-        print(f"This happens because 'levels' is empty, so 'medium' is not found")
+        print("This happens because 'levels' is empty, so 'medium' is not found")
     finally:
         os.unlink(config_path)
 
@@ -110,6 +110,7 @@ def test_proper_config():
         
         engine = EnhancedPatternDetectionEngine(config_path=config_path)
         print("SUCCESS: Engine created with proper config")
+        assert engine is not None  # Verify engine was created
     except Exception as e:
         print(f"Unexpected error: {type(e).__name__}: {e}")
     finally:

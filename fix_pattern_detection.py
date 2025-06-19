@@ -4,6 +4,17 @@ Suggested fix for the pattern detection configuration issue.
 Add this to _parse_sensitivity_config method after line 546.
 """
 
+from typing import Dict
+
+# These would be imported from the actual module structure
+class ConfigurationError(Exception):
+    """Configuration error exception."""
+    pass
+
+class SensitivitySettings:
+    """Sensitivity settings class."""
+    pass
+
 def _parse_sensitivity_config_fixed(self, config: Dict) -> 'SensitivitySettings':
     """Parse and validate sensitivity configuration"""
     if not isinstance(config, dict):

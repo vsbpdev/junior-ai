@@ -4,11 +4,11 @@
 The `SecureCredentialManager` was being instantiated multiple times - once for each instance of `PatternDetectionEngine`. This was inefficient and could lead to:
 - Unnecessary resource usage
 - Multiple file locks on credential storage
-- Potential race conditions in multi-threaded environments
+- Potential race conditions in multithreaded environments
 - Performance overhead from repeated initialization
 
 ## Solution
-Implemented class-level caching for `SecureCredentialManager` to ensure only one instance is created and shared across all `PatternDetectionEngine` instances.
+Implemented a class-level caching mechanism for `SecureCredentialManager` to ensure only one instance is created and shared across all `PatternDetectionEngine` instances.
 
 ### Changes Made
 

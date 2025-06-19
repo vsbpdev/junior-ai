@@ -1,7 +1,7 @@
 """AI client initialization and management."""
 
 import sys
-import asyncio
+import asyncio  # Used in async functions below (initialize_all_clients_async, cleanup_async_ai_clients)
 from typing import Dict, Any, Optional
 from .config import get_credentials
 

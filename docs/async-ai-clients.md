@@ -114,11 +114,11 @@ Speedup:    2.74x
 
 ## Migration Guide
 
-### For Existing Code
+### For Existing Code,
 No changes required! The system maintains full backward compatibility:
 - `call_ai()` continues to work as before
 - `call_multiple_ais()` automatically uses async when available
-- Collaborative tools benefit from async without modifications
+- Collaborative tools benefit from async without modifications.
 
 ### For New Code
 To explicitly use async capabilities:
