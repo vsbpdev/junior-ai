@@ -109,16 +109,18 @@ class AsyncGeminiClient(AsyncAIClient):
         super().__init__(AIProvider.GEMINI, model, timeout)
         self.api_key = api_key
         self._client = None
+        self._init_lock = asyncio.Lock()
     
     async def initialize(self) -> None:
         """Initialize Gemini client."""
         if not HAS_GEMINI:
             raise ImportError("google-generativeai is not installed")
         
-        if not self._initialized:
-            genai.configure(api_key=self.api_key)
-            self._client = genai.GenerativeModel(self.model)
-            self._initialized = True
+        async with self._init_lock:
+            if not self._initialized:
+                genai.configure(api_key=self.api_key)
+                self._client = genai.GenerativeModel(self.model)
+                self._initialized = True
     
     async def generate(self, 
                       prompt: str, 
@@ -224,7 +226,9 @@ class AsyncOpenAICompatibleClient(AsyncAIClient):
     async def cleanup(self) -> None:
         """Clean up client resources."""
         if self._client:
-            await self._client.close()
+            # Check if client has close method before calling
+            if hasattr(self._client, 'close') and callable(self._client.close):
+                await self._client.close()
         self._initialized = False
 
 

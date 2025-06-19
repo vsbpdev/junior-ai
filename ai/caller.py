@@ -98,8 +98,20 @@ async def call_ai_async(ai_name: str, prompt: str, temperature: float = 0.7) -> 
                 # Log error but fall back to sync
                 import sys
                 print(f"⚠️ Async call failed for {ai_name}, falling back to sync: {e}", file=sys.stderr)
+                async_error = e
+                
+                # Try synchronous call as fallback
+                try:
+                    return call_ai(ai_name, prompt, temperature)
+                except Exception as sync_error:
+                    # Re-raise with both error contexts
+                    raise RuntimeError(
+                        f"Both async and sync calls failed. "
+                        f"Async error: {async_error}. "
+                        f"Sync error: {sync_error}"
+                    ) from sync_error
     
-    # Fall back to synchronous call
+    # Fall back to synchronous call if no async support
     return call_ai(ai_name, prompt, temperature)
 
 
