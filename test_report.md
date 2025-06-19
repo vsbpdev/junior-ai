@@ -12,7 +12,7 @@
 ### ✅ test_context_aware_matching.py
 - **Status**: All 13 tests passing
 - **Fixed Issues**: Configuration path validation
-- **Solution**: Created test config in current directory to avoid security restrictions
+- **Solution**: Created test config in the current directory to avoid security restrictions
 
 ### ✅ test_response_synthesis.py  
 - **Status**: All 18 tests passing
@@ -44,7 +44,7 @@
 
 1. **Configuration Path Security**: 
    - Fixed security validation preventing temp file usage
-   - Tests now create config files in current directory
+   - Tests now create config files in the current directory
 
 2. **Missing Sensitivity Levels**:
    - Added default sensitivity levels to EnvironmentProvider
@@ -62,7 +62,7 @@
 
 2. **Configuration Persistence** (test_manual_override.py):
    - Changes not persisting between engine instances
-   - Likely a separate bug, not test infrastructure issue
+   - Likely a separate bug, not a test infrastructure issue
 
 3. **Credential Migration Tests** (test_secure_credentials.py):
    - Minor environment-specific failures

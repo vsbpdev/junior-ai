@@ -4,15 +4,12 @@ Test cases for context-aware pattern matching
 """
 
 import unittest
-import tempfile
 import json
 import os
-from pathlib import Path
-from unittest.mock import patch
 
 from context_aware_matching import (
     ContextAwarePatternMatcher, CodeLanguage, LanguageDetector,
-    PythonContextAnalyzer, ContextualPattern
+    PythonContextAnalyzer
 )
 from pattern_detection import PatternCategory, PatternSeverity
 
