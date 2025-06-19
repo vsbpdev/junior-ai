@@ -289,6 +289,35 @@ JUNIOR_AI_PATTERN_ENABLED=true
 
 For detailed security documentation, see [Secure Credentials Guide](docs/secure-credentials.md).
 
+## 🧪 Testing
+
+Junior AI Assistant includes a comprehensive test suite to ensure reliability:
+
+### Running Tests
+```bash
+# Install test dependencies
+pip3 install -r requirements-test.txt
+
+# Run all tests
+pytest -v
+
+# Run specific test file
+python3 test_context_aware_matching.py
+
+# Run with coverage report
+pytest --cov=. --cov-report=html
+```
+
+### Test Coverage
+- **79% test coverage** across 91 tests
+- Pattern detection engine fully tested
+- AI consultation manager tested
+- Response synthesis tested
+- Manual override controls tested
+
+### Test Infrastructure
+Tests use local configuration files to avoid security validation issues. All test files are automatically cleaned up after test runs.
+
 ## 🐛 Troubleshooting
 
 **MCP not showing up?**
