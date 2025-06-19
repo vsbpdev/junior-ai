@@ -48,7 +48,7 @@ jobs:
 
     - name: Run unit tests
       run: |
-        pytest tests/unit/ -v --cov=. --cov-report=xml --cov-report=term-missing
+        pytest tests/unit/ -v --cov=. --cov-config=.coveragerc --cov-report=xml --cov-report=term-missing --cov-report=html --cov-fail-under=0.5
 
     - name: Run integration tests
       run: |
