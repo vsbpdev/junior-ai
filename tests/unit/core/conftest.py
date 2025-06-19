@@ -51,6 +51,12 @@ def mock_credentials():
             "require_consensus": False,
             "min_ai_responses": 1,
             "timeout": 30
+        },
+        "ai_consultation": {
+            "strategy": "smart",
+            "require_consensus": False,
+            "min_ai_responses": 1,
+            "timeout": 30
         }
     }
 
