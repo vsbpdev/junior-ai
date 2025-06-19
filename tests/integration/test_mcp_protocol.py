@@ -4,7 +4,12 @@ import json
 import pytest
 from unittest.mock import Mock, patch, AsyncMock
 
-from server import main
+# The actual server.py is in the root directory
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+import server
 
 
 @pytest.mark.integration
