@@ -4,7 +4,8 @@
 # No external MCP package required
 
 # AI SDK dependencies
-google-generativeai>=0.8.5,<2.0.0
+google-generativeai>=0.8.5,<2.0.0; python_version>="3.9"
+google-generativeai>=0.3.0,<0.8.0; python_version<"3.9"
 openai>=1.0.0,<2.0.0
 
 # Security and authentication
