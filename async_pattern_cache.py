@@ -585,7 +585,6 @@ def get_global_cache() -> AsyncPatternCache:
 
 async def clear_global_cache():
     """Clear global cache"""
-    global _global_cache
     if _global_cache:
         await _global_cache.clear()
 

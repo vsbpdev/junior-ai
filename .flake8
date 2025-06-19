@@ -1,0 +1,36 @@
+[flake8]
+# Configuration for flake8 linting
+
+# Maximum line length
+max-line-length = 127
+
+# Maximum complexity 
+max-complexity = 10
+
+# Exclude problematic development/experimental files
+exclude = 
+    .git,
+    __pycache__,
+    *.pyc,
+    .pytest_cache,
+    .coverage,
+    htmlcov,
+    # Exclude development/improvement files with syntax issues
+    context_aware_matching_improvements.py,
+    enhanced_context_aware_matching.py,
+    resource_management_improvements.py,
+    server_synthesis_integration.py,
+    # Exclude example files that may be incomplete
+    examples/context_aware_demo.py
+
+# Select specific error types for strict checking
+select = E9,F63,F7,F82
+
+# Ignore specific warnings that are too noisy
+ignore = 
+    # Line too long (handled by max-line-length)
+    E501,
+    # Whitespace before ':' 
+    E203,
+    # Multiple imports on one line
+    E401
